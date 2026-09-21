@@ -12,6 +12,12 @@ don't.
 
 - Take a screenshot by dragging out a region, clicking a window, or picking a
   whole screen, with an optional 3, 5 or 10 second timer.
+- A magnifier follows the pointer while you drag out a region, so you can land
+  on an exact edge.
+- A global keyboard shortcut starts a capture from any app — ⌃⇧S to begin with,
+  changeable in Settings.
+- Settings for the shortcut, what the Dock icon does, the default background and
+  light or dark, the exported image size, and where PNGs are saved.
 - Mark up a capture with numbered pins, numbered arrows, numbered boxes and
   redaction blocks, and describe each one in the legend beside it.
 - The finished shot is composed onto a background with the legend down the right

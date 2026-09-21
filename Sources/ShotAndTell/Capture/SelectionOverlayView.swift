@@ -13,9 +13,14 @@ final class SelectionOverlayView: NSView {
     private static let dim = NSColor.black.withAlphaComponent(0.35)
     private static let hairline = NSColor.white.withAlphaComponent(0.55)
 
+    /// This screen's own contents, for the magnifier. Nil in the modes that
+    /// don't show one, or if that display's screenshot failed.
+    private let displayImage: CapturedImage?
+
     init(session: SelectionSession, screen: NSScreen) {
         self.session = session
         self.screenOrigin = screen.frame.origin
+        self.displayImage = ScreenGeometry.displayID(for: screen).flatMap { session.displayImages[$0] }
         super.init(frame: CGRect(origin: .zero, size: screen.frame.size))
         session.register(self)
     }
@@ -69,6 +74,80 @@ final class SelectionOverlayView: NSView {
         } else if let pointer = session.pointer.map(local), bounds.contains(pointer) {
             drawCrosshair(at: pointer)
         }
+
+        if let pointer = session.pointer.map(local), bounds.contains(pointer) {
+            drawLoupe(at: pointer)
+        }
+    }
+
+    // MARK: - Magnifier
+
+    private static let loupeRadius: CGFloat = 54
+    private static let loupeZoom: CGFloat = 8
+
+    /// A circular magnifier next to the pointer, showing the screen underneath
+    /// it at 8x with a one-pixel crosshair — the difference between "about
+    /// there" and landing on an exact edge.
+    private func drawLoupe(at point: CGPoint) {
+        guard let displayImage, let context = NSGraphicsContext.current?.cgContext else { return }
+
+        let radius = Self.loupeRadius
+        let centre = loupeCentre(for: point, radius: radius)
+        let circle = CGRect(x: centre.x - radius, y: centre.y - radius, width: radius * 2, height: radius * 2)
+
+        // The captured image is in pixels with a top-left origin; the view is in
+        // points with a bottom-left one.
+        let scale = displayImage.scale
+        let pixel = CGPoint(x: point.x * scale, y: (bounds.height - point.y) * scale)
+        let visiblePixels = (radius * 2) / Self.loupeZoom * scale
+        let crop = CGRect(
+            x: pixel.x - visiblePixels / 2,
+            y: pixel.y - visiblePixels / 2,
+            width: visiblePixels,
+            height: visiblePixels
+        )
+
+        context.saveGState()
+        context.addEllipse(in: circle)
+        context.clip()
+
+        NSColor.black.setFill()
+        circle.fill()
+
+        if let cropped = displayImage.image.cropping(to: crop) {
+            // Nearest-neighbour: at 8x, smoothing would defeat the purpose of
+            // looking closely.
+            context.interpolationQuality = .none
+            context.draw(cropped, in: circle)
+        }
+
+        // Crosshair marking the exact pixel under the pointer.
+        NSColor.white.withAlphaComponent(0.8).setStroke()
+        let hair = NSBezierPath()
+        hair.lineWidth = 1
+        hair.move(to: CGPoint(x: circle.minX, y: centre.y))
+        hair.line(to: CGPoint(x: circle.maxX, y: centre.y))
+        hair.move(to: CGPoint(x: centre.x, y: circle.minY))
+        hair.line(to: CGPoint(x: centre.x, y: circle.maxY))
+        hair.stroke()
+        context.restoreGState()
+
+        NSColor.white.withAlphaComponent(0.9).setStroke()
+        let ring = NSBezierPath(ovalIn: circle)
+        ring.lineWidth = 2
+        ring.stroke()
+    }
+
+    /// Up and to the right of the pointer, flipping whenever that would put the
+    /// loupe off the edge of this screen.
+    private func loupeCentre(for point: CGPoint, radius: CGFloat) -> CGPoint {
+        let offset = radius + 22
+        var centre = CGPoint(x: point.x + offset, y: point.y + offset)
+        if centre.x + radius > bounds.maxX - 8 { centre.x = point.x - offset }
+        if centre.y + radius > bounds.maxY - 8 { centre.y = point.y - offset }
+        centre.x = min(max(centre.x, bounds.minX + radius + 8), bounds.maxX - radius - 8)
+        centre.y = min(max(centre.y, bounds.minY + radius + 8), bounds.maxY - radius - 8)
+        return centre
     }
 
     private func drawHighlight(_ rect: CGRect?, label: String?) {

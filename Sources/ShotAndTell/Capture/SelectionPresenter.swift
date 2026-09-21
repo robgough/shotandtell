@@ -5,7 +5,11 @@ import ScreenCaptureKit
 /// something.
 @MainActor
 enum SelectionPresenter {
-    static func present(mode: CaptureMode, content: SCShareableContent) async -> SelectionOutcome {
+    static func present(
+        mode: CaptureMode,
+        content: SCShareableContent,
+        displayImages: [CGDirectDisplayID: CapturedImage] = [:]
+    ) async -> SelectionOutcome {
         // One display and a whole-screen capture: there's nothing to choose
         // between, so don't make the user click to confirm the obvious.
         if mode == .screen, NSScreen.screens.count == 1,
@@ -19,7 +23,7 @@ enum SelectionPresenter {
         var screenObserver: (any NSObjectProtocol)?
 
         let outcome = await withCheckedContinuation { (continuation: CheckedContinuation<SelectionOutcome, Never>) in
-            let session = SelectionSession(mode: mode, content: content) { outcome in
+            let session = SelectionSession(mode: mode, content: content, displayImages: displayImages) { outcome in
                 continuation.resume(returning: outcome)
             }
 

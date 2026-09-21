@@ -85,6 +85,26 @@ nonisolated enum CaptureService {
         return try await run(filter: filter, config: config, scale: scale, description: nil)
     }
 
+    /// Every display, captured once before the overlay goes up.
+    ///
+    /// The magnifier needs real pixels to magnify, and there's no cheap way to
+    /// sample the screen continuously — a stream would be far heavier than one
+    /// screenshot each. Taking them before the overlay appears also means the
+    /// overlay isn't in them. Only region selection asks for this; the other
+    /// modes don't show a loupe and shouldn't pay for one.
+    /// Sequential rather than a task group: `SCDisplay` and `SCShareableContent`
+    /// are not `Sendable`, so they can't be captured by a group's `sending`
+    /// closures. There are rarely more than two or three displays, and each
+    /// screenshot is a few tens of milliseconds.
+    static func captureAllDisplays(_ content: SCShareableContent) async -> [CGDirectDisplayID: CapturedImage] {
+        var images: [CGDirectDisplayID: CapturedImage] = [:]
+        for display in content.displays {
+            // One failure shouldn't cost the others their magnifier.
+            images[display.displayID] = try? await capture(display: display, content: content)
+        }
+        return images
+    }
+
     // MARK: - Plumbing
 
     private static func run(filter: SCContentFilter, config: SCScreenshotConfiguration, scale: CGFloat, description: String?) async throws -> CapturedImage {

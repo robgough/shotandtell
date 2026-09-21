@@ -29,8 +29,18 @@ final class SelectionSession {
         let title: String?
     }
 
-    init(mode: CaptureMode, content: SCShareableContent, finish: @escaping (SelectionOutcome) -> Void) {
+    /// Display contents for the magnifier, keyed by display. Empty for the
+    /// modes that don't show one.
+    let displayImages: [CGDirectDisplayID: CapturedImage]
+
+    init(
+        mode: CaptureMode,
+        content: SCShareableContent,
+        displayImages: [CGDirectDisplayID: CapturedImage] = [:],
+        finish: @escaping (SelectionOutcome) -> Void
+    ) {
         self.mode = mode
+        self.displayImages = displayImages
         self.finish = finish
         if mode == .window {
             windows = Self.hitTestableWindows(from: content)

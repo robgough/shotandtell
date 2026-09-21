@@ -50,7 +50,18 @@ final class CaptureCoordinator {
             }
 
             let content = try await CaptureService.shareableContent()
-            let outcome = await SelectionPresenter.present(mode: request.mode, content: content)
+
+            // Only region selection shows a magnifier, and only it pays for the
+            // screenshots that feed it.
+            let displayImages = request.mode == .region
+                ? await CaptureService.captureAllDisplays(content)
+                : [:]
+
+            let outcome = await SelectionPresenter.present(
+                mode: request.mode,
+                content: content,
+                displayImages: displayImages
+            )
 
             guard let captured = try await capture(outcome, from: content) else {
                 Log.capture.notice("Capture cancelled")
