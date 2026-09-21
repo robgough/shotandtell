@@ -12,4 +12,11 @@ don't.
 
 - Take a screenshot by dragging out a region, clicking a window, or picking a
   whole screen, with an optional 3, 5 or 10 second timer.
-- The capture goes straight to the clipboard, ready to paste.
+- Mark up a capture with numbered pins, numbered arrows, numbered boxes and
+  redaction blocks, and describe each one in the legend beside it.
+- The finished shot is composed onto a background with the legend down the right
+  hand side, so a number on the image always has words to go with it.
+- Choose a background per shot — neutral, one of four gradients, a flat tone, or
+  none — in light or dark.
+- Pressing Done copies the composed image to the clipboard, puts the legend on
+  it as text at the same time, and saves a PNG to Pictures › Shot and tell.

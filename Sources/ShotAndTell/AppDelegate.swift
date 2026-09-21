@@ -3,6 +3,7 @@ import AppKit
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let coordinator = CaptureCoordinator()
     private var menuBar: MenuBarController?
+    private var editors: [EditorWindowController] = []
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Built by hand rather than loaded from a nib: with `@main` on the
@@ -15,6 +16,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.menuBar = menuBar
         coordinator.onCountdown = { [weak menuBar] seconds in
             menuBar?.showCountdown(seconds)
+        }
+        coordinator.onCaptured = { [weak self] capture in
+            self?.openEditor(for: capture)
         }
 
         Log.app.notice("Shot and tell launched")
@@ -33,6 +37,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         coordinator.beginCapture(.region)
         return false
+    }
+
+    /// Editors are held here for as long as their windows are open; an
+    /// NSWindowController with nothing retaining it goes away immediately.
+    /// More than one can be open at once — taking a second screenshot while
+    /// still describing the first is a reasonable thing to do.
+    private func openEditor(for capture: CapturedImage) {
+        let controller = EditorWindowController(capture: capture) { [weak self] controller in
+            self?.editors.removeAll { $0 === controller }
+        }
+        editors.append(controller)
+        controller.show()
     }
 
     /// Quitting when the last window closes would be wrong — the app lives in

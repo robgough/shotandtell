@@ -1,0 +1,85 @@
+import AppKit
+import SwiftUI
+
+/// Owns one editor window and the document behind it.
+///
+/// Held by the app delegate for as long as the window is open — an
+/// `NSWindowController` with nothing retaining it closes the moment ARC notices.
+@MainActor
+final class EditorWindowController: NSWindowController, NSWindowDelegate {
+    /// Named around the `document` that NSWindowController already declares
+    /// for NSDocument-based apps, which this isn't.
+    private let editorDocument: EditorDocument
+    private let onClose: (EditorWindowController) -> Void
+
+    init(capture: CapturedImage, onClose: @escaping (EditorWindowController) -> Void) {
+        self.editorDocument = EditorDocument(capture: capture)
+        self.onClose = onClose
+
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 1040, height: 660),
+            styleMask: [.titled, .closable, .miniaturizable, .resizable],
+            backing: .buffered,
+            defer: false
+        )
+        window.title = "Shot and tell"
+        window.isReleasedWhenClosed = false
+        window.setFrameAutosaveName("EditorWindow")
+
+        super.init(window: window)
+
+        window.delegate = self
+
+        let hosting = NSHostingController(
+            rootView: EditorView(
+                document: editorDocument,
+                onDone: { [weak self] in self?.finish() },
+                onCancel: { [weak self] in self?.close() }
+            )
+        )
+        // Left alone, NSHostingController propagates the SwiftUI view's own
+        // sizing to the window, and the editor opened at its 780×460 minimum
+        // instead of the size asked for above. The window decides how big it is.
+        hosting.sizingOptions = []
+        window.contentViewController = hosting
+        window.setContentSize(NSSize(width: 1040, height: 660))
+        window.center()
+        // The document's own undo manager, so ⌘Z in the window undoes marks
+        // rather than whatever the focused text field last did.
+        window.isRestorable = false
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { fatalError("not used") }
+
+    func show() {
+        NSApp.activate()
+        showWindow(nil)
+        window?.makeKeyAndOrderFront(nil)
+    }
+
+    private func finish() {
+        do {
+            let result = try Exporter.export(editorDocument.composition)
+            if let url = result.fileURL {
+                Log.app.notice("Saved to \(url.lastPathComponent, privacy: .public)")
+            }
+            close()
+        } catch {
+            let alert = NSAlert()
+            alert.messageText = "Couldn't finish the screenshot"
+            alert.informativeText = error.localizedDescription
+            alert.alertStyle = .warning
+            alert.addButton(withTitle: "OK")
+            alert.runModal()
+        }
+    }
+
+    func windowWillReturnUndoManager(_ window: NSWindow) -> UndoManager? {
+        editorDocument.undoManager
+    }
+
+    func windowWillClose(_ notification: Notification) {
+        onClose(self)
+    }
+}
