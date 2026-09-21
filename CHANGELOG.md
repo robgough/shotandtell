@@ -53,5 +53,6 @@ don't.
   pixel survives to the export exactly as taken.
 - Choose a background per shot — neutral, one of four gradients, a flat tone, or
   none — in light or dark.
+- Saved filenames contain exactly one full stop, the one before "png".
 - Pressing Done copies the composed image to the clipboard, puts the legend on
   it as text at the same time, and saves a PNG to Pictures › Shot and Tell.

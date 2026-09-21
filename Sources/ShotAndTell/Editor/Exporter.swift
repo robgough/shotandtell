@@ -129,21 +129,54 @@ enum Exporter {
 
     /// "Homepage spacing 2026-09-21 at 22.31.45.png" — the title first so a
     /// folder of these is browsable, the timestamp second so nothing collides.
+    /// "Homepage spacing 2026-09-22 at 00-14-07.png" — the title first so a
+    /// folder of these is browsable, the timestamp second so nothing collides.
+    ///
+    /// Exactly one full stop in the whole name, the one before `png`. The system
+    /// screenshot convention separates the time with dots, but a name like
+    /// "… 23.53.25.png" gives anything that splits on the last dot a plausible
+    /// ".25" to mistake for an extension, and a title of its own can contain
+    /// dots too. Not worth the compatibility it buys.
     private static func filename(title: String) -> String {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_GB")
-        formatter.dateFormat = "yyyy-MM-dd 'at' HH.mm.ss"
+        formatter.dateFormat = "yyyy-MM-dd 'at' HH-mm-ss"
         let stamp = formatter.string(from: Date())
 
-        var cleaned = title
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .replacingOccurrences(of: "/", with: "-")
-            .replacingOccurrences(of: ":", with: "-")
-            .prefix(60)
-        // A title starting with a dot would make an invisible file, which looks
-        // exactly like the save having failed.
-        while cleaned.hasPrefix(".") { cleaned = cleaned.dropFirst() }
-
+        let cleaned = sanitised(title)
         return cleaned.isEmpty ? "Shot and Tell \(stamp).png" : "\(cleaned) \(stamp).png"
+    }
+
+    /// Turns a title into something safe to be most of a filename.
+    static func sanitised(_ title: String) -> String {
+        var cleaned = ""
+        for character in title {
+            switch character {
+            case "/", ":", "\\":
+                // Path separators, and the colon Finder still shows as one.
+                cleaned.append("-")
+            case ".":
+                cleaned.append("-")
+            default:
+                cleaned.append(character)
+            }
+        }
+
+        // Collapse the runs those substitutions can leave behind ("v1.2." ->
+        // "v1-2-" -> "v1-2"), along with any the user typed themselves.
+        while cleaned.contains("--") {
+            cleaned = cleaned.replacingOccurrences(of: "--", with: "-")
+        }
+        while cleaned.contains("  ") {
+            cleaned = cleaned.replacingOccurrences(of: "  ", with: " ")
+        }
+
+        cleaned = cleaned.trimmingCharacters(in: .whitespacesAndNewlines)
+        // A leading dash reads as a command-line flag to anything shell-shaped;
+        // a trailing one is just untidy.
+        while cleaned.hasPrefix("-") { cleaned.removeFirst() }
+        while cleaned.hasSuffix("-") { cleaned.removeLast() }
+
+        return String(cleaned.prefix(60)).trimmingCharacters(in: .whitespaces)
     }
 }
