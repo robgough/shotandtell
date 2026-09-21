@@ -10,4 +10,6 @@ don't.
 
 ## Unreleased
 
-- Nothing yet — the app doesn't do anything a user could see.
+- Take a screenshot by dragging out a region, clicking a window, or picking a
+  whole screen, with an optional 3, 5 or 10 second timer.
+- The capture goes straight to the clipboard, ready to paste.

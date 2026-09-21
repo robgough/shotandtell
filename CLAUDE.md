@@ -149,7 +149,22 @@ App Store rejects binaries that ship with it set). Any other change goes in both
 Screen recording needs no entitlement — ScreenCaptureKit works inside the sandbox
 and consent is handled by TCC — and macOS composes that permission prompt itself,
 so there's no Info.plist purpose string to write. The explaining has to happen in
-our own first-run UI.
+our own UI (`ScreenRecordingPermission`).
+
+Two things about that permission that cost an hour each:
+
+- **`CGRequestScreenCaptureAccess()` is the only thing that raises the prompt.**
+  Asking ScreenCaptureKit for shareable content does not; it just throws "the user
+  declined TCCs for application, window, display capture", even for a bundle ID
+  that has never been asked about.
+- **It must not be called on the main thread.** It blocks for seconds on a
+  synchronous round trip, and it returns the *current* answer immediately while
+  the prompt is still up — so a false result means "not yet", not "no".
+
+When a grant gets into a bad state during development:
+`tccutil reset ScreenCapture net.robgough.ShotAndTell`, then relaunch. Note that
+TCC records a decision per signing identity, so builds signed ad-hoc and builds
+signed with a certificate are, as far as it is concerned, different apps.
 
 ## Changelog
 

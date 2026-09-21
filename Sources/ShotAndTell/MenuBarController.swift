@@ -25,6 +25,19 @@ final class MenuBarController {
         statusItem.menu = buildMenu()
     }
 
+    /// Counts a timed capture down in the menu bar. There's nowhere else to put
+    /// it — the whole point of the timer is that the app isn't in front.
+    func showCountdown(_ seconds: Int?) {
+        guard let button = statusItem.button else { return }
+        if let seconds {
+            button.title = " \(seconds)"
+            button.imagePosition = .imageLeading
+        } else {
+            button.title = ""
+            button.imagePosition = .imageOnly
+        }
+    }
+
     private func buildMenu() -> NSMenu {
         let menu = NSMenu()
 

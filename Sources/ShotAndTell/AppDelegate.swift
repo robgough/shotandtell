@@ -11,7 +11,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let (mainMenu, windowsMenu) = MainMenu.build()
         NSApp.mainMenu = mainMenu
         NSApp.windowsMenu = windowsMenu
-        menuBar = MenuBarController(coordinator: coordinator)
+        let menuBar = MenuBarController(coordinator: coordinator)
+        self.menuBar = menuBar
+        coordinator.onCountdown = { [weak menuBar] seconds in
+            menuBar?.showCountdown(seconds)
+        }
 
         Log.app.notice("Shot and tell launched")
     }

@@ -1,0 +1,177 @@
+import AppKit
+
+/// One display's worth of selection overlay: the dimming, the crosshair, the
+/// selection rectangle and its readout.
+///
+/// The view's coordinate space is its screen's, so global positions from the
+/// session are converted by subtracting the screen's origin. Nothing is flipped:
+/// AppKit global and AppKit window coordinates both have y going up.
+final class SelectionOverlayView: NSView {
+    private let session: SelectionSession
+    private let screenOrigin: CGPoint
+
+    private static let dim = NSColor.black.withAlphaComponent(0.35)
+    private static let hairline = NSColor.white.withAlphaComponent(0.55)
+
+    init(session: SelectionSession, screen: NSScreen) {
+        self.session = session
+        self.screenOrigin = screen.frame.origin
+        super.init(frame: CGRect(origin: .zero, size: screen.frame.size))
+        session.register(self)
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { fatalError("not used") }
+
+    // MARK: - Geometry
+
+    private func local(_ global: CGPoint) -> CGPoint {
+        CGPoint(x: global.x - screenOrigin.x, y: global.y - screenOrigin.y)
+    }
+
+    private func local(_ global: CGRect) -> CGRect {
+        global.offsetBy(dx: -screenOrigin.x, dy: -screenOrigin.y)
+    }
+
+    // MARK: - Drawing
+
+    override func draw(_ dirtyRect: NSRect) {
+        switch session.mode {
+        case .region: drawRegion()
+        case .window: drawHighlight(session.hovered.map { local($0.cocoaFrame) }, label: session.hovered?.title)
+        case .screen: drawScreenPick()
+        }
+    }
+
+    /// Dims everything except `hole`, in one fill. Punching a hole with an
+    /// even-odd path avoids any compositing-mode games on a transparent window,
+    /// which behave inconsistently once the window is layer-backed.
+    private func dimEverything(except hole: CGRect?) {
+        let path = NSBezierPath(rect: bounds)
+        if let hole, !hole.isEmpty {
+            path.append(NSBezierPath(rect: hole))
+            path.windingRule = .evenOdd
+        }
+        Self.dim.setFill()
+        path.fill()
+    }
+
+    private func drawRegion() {
+        let selection = session.selection.map(local)
+        dimEverything(except: selection)
+
+        if let selection, !selection.isEmpty {
+            NSColor.white.setStroke()
+            let border = NSBezierPath(rect: selection.insetBy(dx: -0.5, dy: -0.5))
+            border.lineWidth = 1
+            border.stroke()
+            drawReadout("\(Int(selection.width.rounded())) × \(Int(selection.height.rounded()))", near: selection)
+        } else if let pointer = session.pointer.map(local), bounds.contains(pointer) {
+            drawCrosshair(at: pointer)
+        }
+    }
+
+    private func drawHighlight(_ rect: CGRect?, label: String?) {
+        dimEverything(except: rect)
+        guard let rect, !rect.isEmpty else { return }
+
+        NSColor.controlAccentColor.setStroke()
+        let border = NSBezierPath(rect: rect.insetBy(dx: -1, dy: -1))
+        border.lineWidth = 2
+        border.stroke()
+
+        if let label, !label.isEmpty {
+            drawReadout(label, near: rect)
+        }
+    }
+
+    private func drawScreenPick() {
+        // The whole screen is the target, so this view either highlights all of
+        // itself or dims all of itself, depending on where the pointer is.
+        let pointerIsHere = session.pointer.map { bounds.contains(local($0)) } ?? false
+        drawHighlight(pointerIsHere ? bounds.insetBy(dx: 1, dy: 1) : nil,
+                      label: pointerIsHere ? "\(Int(bounds.width)) × \(Int(bounds.height))" : nil)
+    }
+
+    private func drawCrosshair(at point: CGPoint) {
+        Self.hairline.setStroke()
+        let path = NSBezierPath()
+        path.lineWidth = 1
+        path.move(to: CGPoint(x: bounds.minX, y: point.y.rounded() + 0.5))
+        path.line(to: CGPoint(x: bounds.maxX, y: point.y.rounded() + 0.5))
+        path.move(to: CGPoint(x: point.x.rounded() + 0.5, y: bounds.minY))
+        path.line(to: CGPoint(x: point.x.rounded() + 0.5, y: bounds.maxY))
+        path.stroke()
+    }
+
+    /// A small dark pill just outside the selection — below it normally, above
+    /// when there's no room, and always kept on screen.
+    private func drawReadout(_ text: String, near rect: CGRect) {
+        let attributes: [NSAttributedString.Key: Any] = [
+            .font: NSFont.monospacedDigitSystemFont(ofSize: 12, weight: .medium),
+            .foregroundColor: NSColor.white,
+        ]
+        let size = (text as NSString).size(withAttributes: attributes)
+        let padding = CGSize(width: 8, height: 4)
+        let pill = CGSize(width: size.width + padding.width * 2, height: size.height + padding.height * 2)
+
+        var origin = CGPoint(x: rect.midX - pill.width / 2, y: rect.minY - pill.height - 6)
+        if origin.y < bounds.minY + 4 { origin.y = rect.maxY + 6 }
+        origin.x = min(max(origin.x, bounds.minX + 4), bounds.maxX - pill.width - 4)
+        origin.y = min(max(origin.y, bounds.minY + 4), bounds.maxY - pill.height - 4)
+
+        let pillRect = CGRect(origin: origin, size: pill)
+        NSColor.black.withAlphaComponent(0.75).setFill()
+        NSBezierPath(roundedRect: pillRect, xRadius: 5, yRadius: 5).fill()
+        (text as NSString).draw(at: CGPoint(x: pillRect.minX + padding.width, y: pillRect.minY + padding.height),
+                                withAttributes: attributes)
+    }
+
+    // MARK: - Input
+
+    override var acceptsFirstResponder: Bool { true }
+
+    override func resetCursorRects() {
+        addCursorRect(bounds, cursor: session.mode == .region ? .crosshair : .arrow)
+    }
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        for area in trackingAreas { removeTrackingArea(area) }
+        addTrackingArea(NSTrackingArea(
+            rect: bounds,
+            options: [.activeAlways, .mouseMoved, .mouseEnteredAndExited, .inVisibleRect],
+            owner: self
+        ))
+    }
+
+    private func globalPoint(_ event: NSEvent) -> CGPoint {
+        let inView = convert(event.locationInWindow, from: nil)
+        return CGPoint(x: inView.x + screenOrigin.x, y: inView.y + screenOrigin.y)
+    }
+
+    override func mouseMoved(with event: NSEvent) {
+        session.pointerMoved(to: globalPoint(event))
+    }
+
+    override func mouseDown(with event: NSEvent) {
+        session.dragBegan(at: globalPoint(event))
+    }
+
+    override func mouseDragged(with event: NSEvent) {
+        session.dragChanged(to: globalPoint(event))
+    }
+
+    override func mouseUp(with event: NSEvent) {
+        session.dragEnded(at: globalPoint(event))
+    }
+
+    override func keyDown(with event: NSEvent) {
+        // 53 is Escape. Anything else is ignored rather than beeping.
+        if event.keyCode == 53 { session.cancel() }
+    }
+
+    override func cancelOperation(_ sender: Any?) {
+        session.cancel()
+    }
+}
