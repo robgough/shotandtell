@@ -27,7 +27,11 @@ don't.
   hand side, so a number on the image always has words to go with it.
 - Press V, P, A, B or R to pick a tool, and start typing a description the
   moment a mark is placed — Escape sends focus back to the screenshot.
-- Marks can be moved and resized by their handles after they're drawn.
+- Marks can be moved and resized by their handles after they're drawn, and can
+  sit out in the background beside the screenshot — the canvas grows to fit
+  them, so you can box or point at something right on an edge.
+- Placing a mark returns you to Select, so the next click picks something up
+  rather than making another one.
 - If Apple Intelligence is available, the title is suggested by the on-device
   model from the screenshot itself. Nothing is sent anywhere.
 - ⇧⌘C copies just the legend as text. The image alone goes on the clipboard

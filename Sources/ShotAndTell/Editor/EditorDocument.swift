@@ -78,6 +78,11 @@ final class EditorDocument {
         mutate("Add \(annotation.isNumbered ? "Mark" : "Redaction")") { $0.append(annotation) }
         selection = annotation.id
         if annotation.isNumbered { pendingFocus = annotation.id }
+        // Back to Select once a mark is down. Staying on the drawing tool means
+        // the next click makes another mark, when what you usually want next is
+        // to nudge the one you just made or get at the one underneath. The tool
+        // is one keystroke away when you do want a second.
+        tool = .select
     }
 
     func remove(_ id: UUID) {
@@ -86,10 +91,10 @@ final class EditorDocument {
         if selection == id { selection = nil }
     }
 
-    func move(_ id: UUID, by delta: CGVector) {
+    func move(_ id: UUID, by delta: CGVector, within margin: CGVector) {
         mutate("Move Mark", coalescing: true) { annotations in
             guard let index = annotations.firstIndex(where: { $0.id == id }) else { return }
-            annotations[index].move(by: delta)
+            annotations[index].move(by: delta, within: margin)
         }
     }
 

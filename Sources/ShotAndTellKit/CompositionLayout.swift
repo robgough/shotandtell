@@ -86,15 +86,26 @@ nonisolated struct CompositionLayout: Sendable {
             legendHeight += (legendHeight > 0 ? entrySpacing : 0) + badgeDiameter
         }
 
+        // Marks are allowed to sit off the edge of the capture — an arrow
+        // starting out in the background and pointing into a corner, a box drawn
+        // around something right at the edge. The canvas grows to contain them
+        // rather than clipping them away, so what you drew is what gets
+        // exported.
+        let overflow = marginOverflow(composition, captureSize: captureSize)
+        let leftPad = max(padding, overflow.left)
+        let rightPad = max(padding, overflow.right)
+        let topPad = max(padding, overflow.top)
+        let bottomPad = max(padding, overflow.bottom)
+
         let contentHeight = max(captureSize.height, legendHeight)
-        let canvasWidth = padding * 2 + captureSize.width + (hasLegend ? columnGap + legendWidth : 0)
-        let canvasHeight = padding * 2 + contentHeight
+        let canvasWidth = leftPad + rightPad + captureSize.width + (hasLegend ? columnGap + legendWidth : 0)
+        let canvasHeight = topPad + bottomPad + contentHeight
         let canvasSize = CGSize(width: canvasWidth, height: canvasHeight)
 
         // y-up: subtract from the top rather than adding from the bottom.
-        let contentTop = canvasHeight - padding
+        let contentTop = canvasHeight - topPad
         let captureRect = CGRect(
-            x: padding,
+            x: leftPad,
             y: contentTop - captureSize.height,
             width: captureSize.width,
             height: captureSize.height
@@ -153,6 +164,29 @@ nonisolated struct CompositionLayout: Sendable {
             ruleY: ruleY,
             redactionKeyRect: redactionKeyRect
         )
+    }
+
+    /// How far past each edge of the capture the marks reach, in points.
+    ///
+    /// Measured from the annotation bounds plus the radius of the number badge,
+    /// which is drawn centred on its anchor and so sticks out past the geometry
+    /// it belongs to.
+    private static func marginOverflow(
+        _ composition: Composition,
+        captureSize: CGSize
+    ) -> (left: CGFloat, right: CGFloat, top: CGFloat, bottom: CGFloat) {
+        let allowance = markerDiameter / 2 + 4
+        var left: CGFloat = 0, right: CGFloat = 0, top: CGFloat = 0, bottom: CGFloat = 0
+
+        for annotation in composition.annotations {
+            let bounds = annotation.bounds
+            left = max(left, -bounds.minX * captureSize.width + allowance)
+            right = max(right, (bounds.maxX - 1) * captureSize.width + allowance)
+            // Normalised y runs downwards from the top of the capture.
+            top = max(top, -bounds.minY * captureSize.height + allowance)
+            bottom = max(bottom, (bounds.maxY - 1) * captureSize.height + allowance)
+        }
+        return (left, right, top, bottom)
     }
 
     /// An empty description still needs a row, or the number would vanish from

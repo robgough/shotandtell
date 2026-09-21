@@ -162,7 +162,9 @@ nonisolated enum Compositor {
         let capture = layout.captureRect
 
         // Redactions first and separately: they must cover the capture, and they
-        // must never be covered by a marker that happens to overlap.
+        // must never be covered by a marker that happens to overlap. They are
+        // the only annotation clipped to the capture — covering up part of the
+        // background would be meaningless.
         context.saveGState()
         context.addPath(clipPath(for: composition, rect: capture))
         context.clip()
@@ -177,7 +179,10 @@ nonisolated enum Compositor {
             // under it survives. Cosmetics lose this argument.
             context.fill(rect.insetBy(dx: -0.5, dy: -0.5))
         }
+        context.restoreGState()
 
+        // Marks are deliberately *not* clipped to the capture: the layout grew
+        // the canvas to make room for anything hanging over the edge.
         for (number, annotation) in composition.numbered {
             switch annotation.kind {
             case let .pin(point):
@@ -204,7 +209,6 @@ nonisolated enum Compositor {
                 break
             }
         }
-        context.restoreGState()
     }
 
     /// Markers are clipped to the capture's rounded rectangle so one dropped

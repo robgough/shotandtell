@@ -62,20 +62,24 @@ nonisolated struct Annotation: Identifiable, Equatable, Codable, Sendable {
         }
     }
 
-    /// Moves the whole annotation by a normalised delta, keeping it on the
-    /// capture. Dragged off the edge it would be clipped out of the image while
-    /// keeping its number in the legend, which is worse than not moving.
-    mutating func move(by delta: CGVector) {
+    /// Moves the whole annotation by a normalised delta.
+    ///
+    /// `margin` is how far past each edge of the capture a mark may sit,
+    /// expressed in the same normalised units — the caller works it out from the
+    /// composition's padding, because the sensible allowance depends on how big
+    /// the capture is. Redactions stay on the capture whatever is passed: a
+    /// black box over the background hides nothing.
+    mutating func move(by delta: CGVector, within margin: CGVector = .zero) {
         switch kind {
         case let .pin(point):
-            kind = .pin(at: point.offset(by: delta).clampedToUnitSquare())
+            kind = .pin(at: point.offset(by: delta).clamped(margin: margin))
         case let .arrow(from, to):
             kind = .arrow(
-                from: from.offset(by: delta).clampedToUnitSquare(),
-                to: to.offset(by: delta).clampedToUnitSquare()
+                from: from.offset(by: delta).clamped(margin: margin),
+                to: to.offset(by: delta).clamped(margin: margin)
             )
         case let .box(rect):
-            kind = .box(rect.offsetBy(dx: delta.dx, dy: delta.dy).clampedToUnitSquare())
+            kind = .box(rect.offsetBy(dx: delta.dx, dy: delta.dy).clamped(margin: margin))
         case let .redaction(rect):
             kind = .redaction(rect.offsetBy(dx: delta.dx, dy: delta.dy).clampedToUnitSquare())
         }
@@ -93,7 +97,14 @@ nonisolated extension CGPoint {
     /// Keeps a normalised point inside the capture. Dragging a marker off the
     /// edge would put its number somewhere the legend can't explain.
     func clampedToUnitSquare() -> CGPoint {
-        CGPoint(x: min(max(x, 0), 1), y: min(max(y, 0), 1))
+        clamped(margin: .zero)
+    }
+
+    func clamped(margin: CGVector) -> CGPoint {
+        CGPoint(
+            x: min(max(x, -margin.dx), 1 + margin.dx),
+            y: min(max(y, -margin.dy), 1 + margin.dy)
+        )
     }
 }
 
@@ -101,11 +112,17 @@ nonisolated extension CGRect {
     /// Slides a normalised rectangle back inside the capture without resizing
     /// it — a box dragged past the edge should stop, not shrink.
     func clampedToUnitSquare() -> CGRect {
-        let width = min(self.width, 1)
-        let height = min(self.height, 1)
+        clamped(margin: .zero)
+    }
+
+    /// Slides a normalised rectangle back inside the allowed area without
+    /// resizing it — a box dragged past the edge should stop, not shrink.
+    func clamped(margin: CGVector) -> CGRect {
+        let width = min(self.width, 1 + margin.dx * 2)
+        let height = min(self.height, 1 + margin.dy * 2)
         return CGRect(
-            x: min(max(minX, 0), 1 - width),
-            y: min(max(minY, 0), 1 - height),
+            x: min(max(minX, -margin.dx), 1 + margin.dx - width),
+            y: min(max(minY, -margin.dy), 1 + margin.dy - height),
             width: width,
             height: height
         )

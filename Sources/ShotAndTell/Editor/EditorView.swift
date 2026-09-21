@@ -17,7 +17,6 @@ struct EditorView: View {
     var body: some View {
         VStack(spacing: 0) {
             toolbar
-            Divider()
             HStack(spacing: 0) {
                 CompositionCanvas(
                     document: document,
@@ -28,6 +27,7 @@ struct EditorView: View {
                 Divider()
                 legend
                     .frame(width: 300)
+                    .background(.regularMaterial)
             }
         }
         .frame(minWidth: 780, minHeight: 460)
@@ -44,17 +44,16 @@ struct EditorView: View {
     }
 
     private var toolbar: some View {
-        HStack(spacing: 12) {
-            Picker("Tool", selection: $document.tool) {
-                ForEach(EditorTool.allCases) { tool in
-                    Label(tool.title, systemImage: tool.symbol)
-                        .help(tool.help)
-                        .tag(tool)
+        HStack(spacing: 10) {
+            // Icons rather than words, each carrying its own key. A toolbar that
+            // shows you the shortcut is how you stop needing the toolbar.
+            GlassEffectContainer(spacing: 4) {
+                HStack(spacing: 4) {
+                    ForEach(EditorTool.allCases) { tool in
+                        toolButton(tool)
+                    }
                 }
             }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-            .fixedSize()
 
             Spacer()
 
@@ -68,11 +67,13 @@ struct EditorView: View {
                 Label("Copy Legend", systemImage: "text.badge.checkmark")
             }
             .labelStyle(.iconOnly)
+            .buttonStyle(.glass)
             .keyboardShortcut("c", modifiers: [.command, .shift])
             .help("Copy the legend as text (⇧⌘C)")
             .disabled(document.composition.numbered.isEmpty)
 
             Button("Copy", action: onCopy)
+                .buttonStyle(.glass)
                 .keyboardShortcut("c", modifiers: [.command, .option])
                 .help("Copy the finished image and leave this window open (⌥⌘C)")
 
@@ -81,15 +82,44 @@ struct EditorView: View {
             // capture, with nothing to show for it, because your finger went to
             // the wrong key.
             Button("Discard", action: onCancel)
+                .buttonStyle(.glass)
                 .help("Throw this capture away")
 
             Button("Copy & Close", action: onDone)
                 .keyboardShortcut(.return, modifiers: .command)
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.glassProminent)
                 .help(doneHelp)
         }
-        .padding(.horizontal, 14)
+        // Leading room for the traffic lights: the title bar is transparent and
+        // the content runs underneath it.
+        .padding(.leading, 82)
+        .padding(.trailing, 14)
         .padding(.vertical, 10)
+        .background(.bar)
+    }
+
+    @ViewBuilder
+    private func toolButton(_ tool: EditorTool) -> some View {
+        let key = String(tool.shortcut).uppercased()
+        let label = HStack(spacing: 5) {
+            Image(systemName: tool.symbol)
+                .imageScale(.medium)
+                .frame(width: 16)
+            Text(key)
+                .font(.system(size: 10, weight: .semibold, design: .rounded))
+                .opacity(0.6)
+        }
+        .padding(.vertical, 1)
+
+        if document.tool == tool {
+            Button(action: { document.tool = tool }) { label }
+                .buttonStyle(.glassProminent)
+                .help("\(tool.title) — press \(key)")
+        } else {
+            Button(action: { document.tool = tool }) { label }
+                .buttonStyle(.glass)
+                .help("\(tool.title) — press \(key)")
+        }
     }
 
     private var backgroundMenu: some View {
@@ -117,7 +147,8 @@ struct EditorView: View {
         } label: {
             Label("Background", systemImage: "paintpalette")
         }
-        .menuStyle(.borderlessButton)
+        .menuStyle(.button)
+        .buttonStyle(.glass)
         .fixedSize()
     }
 
@@ -169,8 +200,10 @@ struct EditorView: View {
         Pick a tool and click the screenshot. Each mark gets a number, and \
         whatever you type here becomes its entry in the legend.
 
-        P, A, B and R pick a tool while the screenshot has focus; Escape in a \
-        description sends focus back to it.
+        The keys on the buttons pick a tool while the screenshot has focus. \
+        After a mark is placed you're back in Select, so the next click picks \
+        something up rather than making another one — and Escape in a \
+        description hands focus back to the screenshot.
         """
     }
 

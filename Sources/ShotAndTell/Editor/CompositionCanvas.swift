@@ -209,8 +209,28 @@ final class CompositionCanvasView: NSView {
         )
     }
 
+    /// Normalised position, allowed to fall outside the capture by as much as
+    /// the composition's own margin.
+    ///
+    /// Boxing something in a corner, or starting an arrow out in the background
+    /// and pointing it inwards, both mean working in the margin. The layout
+    /// grows the canvas to fit whatever lands there; the clamp only stops a mark
+    /// being dragged somewhere the canvas would have to become absurd to
+    /// contain.
+    private func normalisedAllowingMargin(_ viewPoint: CGPoint, layout: CompositionLayout) -> CGPoint {
+        let margin = CompositionLayout.padding
+        let allowed = layout.captureRect.insetBy(dx: -margin, dy: -margin)
+        let point = canvasPoint(viewPoint)
+        let clamped = CGPoint(
+            x: min(max(point.x, allowed.minX), allowed.maxX),
+            y: min(max(point.y, allowed.minY), allowed.maxY)
+        )
+        return Compositor.normalise(clamped, in: layout.captureRect)
+    }
+
     /// Normalised position on the capture, or nil if the point isn't on it —
-    /// clicking the legend or the margin shouldn't drop a marker.
+    /// used by the pin tool, which has no reason to drop a number in the
+    /// margin with nothing under it.
     private func normalised(_ viewPoint: CGPoint) -> CGPoint? {
         guard let layout = cachedLayout else { return nil }
         let point = canvasPoint(viewPoint)
@@ -284,7 +304,7 @@ final class CompositionCanvasView: NSView {
         let point = convert(event.locationInWindow, from: nil)
 
         if let resizing, let layout = cachedLayout {
-            let moved = Compositor.normalise(canvasPoint(point), in: layout.captureRect).clampedToUnitSquare()
+            let moved = normalisedAllowingMargin(point, layout: layout)
             let kind: Annotation.Kind
             switch resizing.handle {
             case .arrowTail:
@@ -313,7 +333,11 @@ final class CompositionCanvasView: NSView {
                 dx: (point.x - last.x) / fitScale / layout.captureRect.width,
                 dy: -(point.y - last.y) / fitScale / layout.captureRect.height
             )
-            document.move(movingID, by: delta)
+            let margin = CGVector(
+                dx: CompositionLayout.padding / layout.captureRect.width,
+                dy: CompositionLayout.padding / layout.captureRect.height
+            )
+            document.move(movingID, by: delta, within: margin)
             lastMovePoint = point
             invalidate()
             return
@@ -348,8 +372,8 @@ final class CompositionCanvasView: NSView {
         // margin — it's the natural gesture, and it used to produce nothing at
         // all. A drag entirely outside collapses to an empty rect and is
         // rejected by the size check below.
-        let from = Compositor.normalise(canvasPoint(start), in: layout.captureRect).clampedToUnitSquare()
-        let to = Compositor.normalise(canvasPoint(end), in: layout.captureRect).clampedToUnitSquare()
+        let from = normalisedAllowingMargin(start, layout: layout)
+        let to = normalisedAllowingMargin(end, layout: layout)
 
         switch document.tool {
         case .arrow:

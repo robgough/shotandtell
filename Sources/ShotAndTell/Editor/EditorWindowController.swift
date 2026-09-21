@@ -33,11 +33,15 @@ final class EditorWindowController: NSWindowController, NSWindowDelegate {
 
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 1040, height: 660),
-            styleMask: [.titled, .closable, .miniaturizable, .resizable],
+            styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
             backing: .buffered,
             defer: false
         )
         window.title = "Shot and Tell"
+        // The toolbar runs to the top of the window rather than sitting under a
+        // separate title bar, which is what a Mac app looks like now.
+        window.titlebarAppearsTransparent = true
+        window.titleVisibility = .hidden
         window.isReleasedWhenClosed = false
         window.setFrameAutosaveName("EditorWindow")
 
