@@ -80,16 +80,27 @@ final class SelectionSession {
 
         switch mode {
         case .region:
+            // A drag genuinely can span displays, but a capture can't: the
+            // sourceRect goes to one display, and two displays can be at
+            // different scales anyway. Pick the display the selection mostly
+            // lies on, and clamp to it — silently capturing a black margin
+            // would be worse than capturing slightly less than was dragged.
             guard let selection,
-                  selection.width >= CaptureService.minimumRegionSize,
-                  selection.height >= CaptureService.minimumRegionSize,
-                  let displayID = displayID(containing: selection.origin) ?? displayID(containing: global)
+                  let screen = screenWithLargestOverlap(selection),
+                  let displayID = ScreenGeometry.displayID(for: screen)
+            else {
+                complete(.cancelled)
+                return
+            }
+            let clamped = selection.intersection(screen.frame)
+            guard clamped.width >= CaptureService.minimumRegionSize,
+                  clamped.height >= CaptureService.minimumRegionSize
             else {
                 // A click rather than a drag: treat it as "I changed my mind".
                 complete(.cancelled)
                 return
             }
-            complete(.region(selection, displayID: displayID))
+            complete(.region(clamped, displayID: displayID))
 
         case .window:
             if let hovered {
@@ -116,6 +127,9 @@ final class SelectionSession {
     private func complete(_ outcome: SelectionOutcome) {
         guard let finish else { return }
         self.finish = nil
+        // The views hold the session and the session held the views, so without
+        // this every capture leaked a session and one overlay view per display.
+        views.removeAll()
         finish(outcome)
     }
 
@@ -128,6 +142,13 @@ final class SelectionSession {
     private func displayID(containing global: CGPoint) -> CGDirectDisplayID? {
         guard let screen = NSScreen.screens.first(where: { $0.frame.contains(global) }) else { return nil }
         return ScreenGeometry.displayID(for: screen)
+    }
+
+    private func screenWithLargestOverlap(_ rect: CGRect) -> NSScreen? {
+        NSScreen.screens
+            .map { ($0, $0.frame.intersection(rect)) }
+            .filter { !$0.1.isNull && !$0.1.isEmpty }
+            .max { $0.1.width * $0.1.height < $1.1.width * $1.1.height }?.0
     }
 
     private func topmostWindow(under global: CGPoint) -> HitTestableWindow? {
@@ -149,6 +170,13 @@ final class SelectionSession {
             .filter { window in
                 window.isOnScreen
                     && window.owningApplication?.processID != ourPID
+                    // Layer 0 is kCGNormalWindowLevel: ordinary app windows.
+                    // Without this the menu bar and the Dock's full-display
+                    // backing window are candidates, and the Dock's one sits
+                    // above every real window in the list, so it would win every
+                    // hit test. A size floor alone only excluded the menu bar by
+                    // the accident of it being under 40 points tall.
+                    && window.windowLayer == 0
                     && window.frame.width >= 40 && window.frame.height >= 40
                     && rank[window.windowID] != nil
             }

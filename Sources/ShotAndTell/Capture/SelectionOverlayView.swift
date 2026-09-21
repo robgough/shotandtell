@@ -131,6 +131,11 @@ final class SelectionOverlayView: NSView {
 
     override var acceptsFirstResponder: Bool { true }
 
+    /// Only the overlay under the pointer is made key. Without this, the first
+    /// mouse-down on any *other* display would be swallowed to activate that
+    /// window, so the drag would arrive with no anchor and cancel the capture.
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+
     override func resetCursorRects() {
         addCursorRect(bounds, cursor: session.mode == .region ? .crosshair : .arrow)
     }

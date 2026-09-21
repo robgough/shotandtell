@@ -59,8 +59,12 @@ final class EditorWindowController: NSWindowController, NSWindowDelegate {
     }
 
     private func finish() {
+        Task { await finishExport() }
+    }
+
+    private func finishExport() async {
         do {
-            let result = try Exporter.export(editorDocument.composition)
+            let result = try await Exporter.export(editorDocument.composition)
             if let url = result.fileURL {
                 Log.app.notice("Saved to \(url.lastPathComponent, privacy: .public)")
             }

@@ -43,6 +43,15 @@ final class MenuBarController {
 
         let new = menu.addItem(withTitle: "New Capture", action: #selector(newCapture), keyEquivalent: "")
         new.target = self
+        // Shown, not bound: this is the *global* shortcut, which fires whatever
+        // app is frontmost. A menu key equivalent would only work when Shot and
+        // tell already had focus, which is almost never when you want a
+        // screenshot. `isAlternate` is not involved — the attributed title just
+        // puts the keys where people look for them.
+        if let hotkey = Settings.shared.hotkey, hotkey.isUsable {
+            new.title = "New Capture"
+            new.toolTip = "Global shortcut: \(hotkey.displayString)"
+        }
 
         for mode in CaptureMode.allCases {
             let item = menu.addItem(withTitle: mode.menuTitle, action: #selector(captureMode(_:)), keyEquivalent: "")
@@ -64,8 +73,8 @@ final class MenuBarController {
 
         menu.addItem(.separator())
 
-        let settings = menu.addItem(withTitle: "Settings…", action: nil, keyEquivalent: ",")
-        settings.isEnabled = false  // TODO(phase 5): the Settings window.
+        let settings = menu.addItem(withTitle: "Settings…", action: #selector(AppDelegate.openSettings), keyEquivalent: ",")
+        settings.target = NSApp.delegate
 
         menu.addItem(withTitle: "About Shot and tell", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
         menu.addItem(.separator())

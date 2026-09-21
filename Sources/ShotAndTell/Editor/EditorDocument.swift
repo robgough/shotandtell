@@ -31,7 +31,8 @@ final class EditorDocument {
             // The captured app's name is a better starting point than an empty
             // field, and it's the thing people would type anyway.
             title: capture.sourceDescription ?? "",
-            appearance: NSApp.effectiveAppearance.isDark ? .dark : .light
+            background: Settings.shared.defaultBackground,
+            appearance: Settings.shared.resolvedAppearance()
         )
     }
 
@@ -105,11 +106,5 @@ final class EditorDocument {
     /// Called when a drag finishes, so the next one starts a fresh undo group.
     func endCoalescing() {
         lastCoalescedName = nil
-    }
-}
-
-private extension NSAppearance {
-    var isDark: Bool {
-        bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
     }
 }

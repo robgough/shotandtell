@@ -2,6 +2,11 @@ import AppKit
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let coordinator = CaptureCoordinator()
+    /// Wired up as the action for every "Settings…" item in the app.
+    @objc func openSettings() {
+        SettingsWindowController.shared.show()
+    }
+
     private var menuBar: MenuBarController?
     private var editors: [EditorWindowController] = []
 
@@ -21,6 +26,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.openEditor(for: capture)
         }
 
+        GlobalHotkey.shared.onFire = { [weak coordinator] in
+            coordinator?.beginCapture(CaptureRequest(mode: Settings.shared.dockClickMode))
+        }
+        Settings.shared.applyHotkey()
+
         Log.app.notice("Shot and tell launched")
     }
 
@@ -35,7 +45,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // certainly meant "bring that back", not "throw it away and start again".
         guard !flag else { return true }
 
-        coordinator.beginCapture(.region)
+        coordinator.beginCapture(CaptureRequest(mode: Settings.shared.dockClickMode))
         return false
     }
 

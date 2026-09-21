@@ -97,13 +97,27 @@ almost entirely UI, so main-actor is the default and the *exceptions* — the
 ScreenCaptureKit grab, PNG encoding — are what have to be marked. Don't sprinkle
 `@MainActor`; it's already implied.
 
-**Every declaration in `Sources/ShotAndTellKit/` must be marked `nonisolated`.**
-The isolation default is module-wide, and Kit is compiled into the same module,
-so without it the document model, the compositor and even their synthesised
-`Codable` / `CaseIterable` conformances become main-actor-isolated — which is
-precisely backwards, because composing and encoding the image is the work that
-belongs off the main thread. It fails at the point of *use*, not the point of
-declaration, so it's cheap now and a retrofit across every Kit type later.
+**Every declaration in `Sources/ShotAndTellKit/` must be marked `nonisolated`** —
+types, extensions of imported types, the lot. The isolation default is
+module-wide, and Kit is compiled into the same module, so without it the document
+model, the compositor and even their synthesised `Codable` / `CaseIterable`
+conformances become main-actor-isolated. It fails at the point of *use*, not the
+point of declaration, so it's cheap now and a retrofit across every Kit type
+later.
+
+**`nonisolated` does not mean "runs off the main thread".** It means "callable
+from anywhere". With `SWIFT_APPROACHABLE_CONCURRENCY` a nonisolated function runs
+on its *caller's* actor, so calling `Compositor.render` or `PNGEncoder.encode`
+from the main actor composes and encodes on the main thread — about a third of a
+second for a full-screen 6K capture, i.e. a visible freeze. Moving work off main
+takes an explicit `Task.detached` (see `Exporter.export`) or `@concurrent`. The
+two attributes do different jobs and Kit needs both kinds of thinking.
+
+Note also that none of ScreenCaptureKit's types (`SCShareableContent`,
+`SCDisplay`, `SCWindow`, `SCContentFilter`) are `Sendable`, so `CaptureService`
+effectively lives on its caller's actor whatever it's annotated with. That's
+fine — it awaits ScreenCaptureKit rather than computing anything — but don't try
+to force it onto a background executor.
 
 If an iOS target ever arrives, promote Kit to a local Swift package with its own
 `SWIFT_DEFAULT_ACTOR_ISOLATION = nonisolated`. That also turns "nothing here may
@@ -133,6 +147,17 @@ The Dock icon (`applicationShouldHandleReopen`), the menu bar
 (`MenuBarController`), and the global hotkey (phase 5). All three funnel through
 `CaptureCoordinator.beginCapture(_:)` — keep it that way, so behaviour like
 "don't start a second capture while the picker is up" is written once.
+
+### Colour
+
+The compositor renders into a fixed **sRGB** context, and `Palette` holds
+concrete `CGColor` values rather than `NSColor`. Captures come back in the
+display's colour space (Display P3 on most modern Macs) and are converted on the
+way in. That's deliberate: these images are made to be pasted into chat windows,
+issue trackers and model prompts, most of which handle sRGB predictably and P3
+less so, and an export should look the same to whoever opens it rather than
+resolving against the reader's appearance. Changing it later shifts the colours
+of every export.
 
 ## Sandbox
 

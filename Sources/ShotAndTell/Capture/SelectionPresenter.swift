@@ -16,6 +16,7 @@ enum SelectionPresenter {
 
         var windows: [SelectionOverlayWindow] = []
         var monitor: Any?
+        var screenObserver: (any NSObjectProtocol)?
 
         let outcome = await withCheckedContinuation { (continuation: CheckedContinuation<SelectionOutcome, Never>) in
             let session = SelectionSession(mode: mode, content: content) { outcome in
@@ -32,7 +33,18 @@ enum SelectionPresenter {
                 return nil
             }
 
-            NSApp.activate(ignoringOtherApps: true)
+            // Overlays are positioned from the screen layout captured a moment
+            // ago, and the displays SCK told us about are equally stale. If that
+            // changes mid-selection, abandon rather than draw somewhere wrong.
+            screenObserver = NotificationCenter.default.addObserver(
+                forName: NSApplication.didChangeScreenParametersNotification,
+                object: nil,
+                queue: .main
+            ) { _ in
+                MainActor.assumeIsolated { session.cancel() }
+            }
+
+            NSApp.activate()
             for window in windows { window.orderFrontRegardless() }
             // Key the overlay under the pointer, so the first Escape lands
             // without needing a click first.
@@ -42,10 +54,16 @@ enum SelectionPresenter {
         }
 
         if let monitor { NSEvent.removeMonitor(monitor) }
+        if let screenObserver { NotificationCenter.default.removeObserver(screenObserver) }
         for window in windows {
+            // contentView is cleared explicitly: the window server was still
+            // listing these as on-screen after a cancel, and a stranded
+            // shielding-level window swallows every click on the display.
+            window.contentView = nil
             window.orderOut(nil)
             window.close()
         }
+        windows.removeAll()
 
         return outcome
     }

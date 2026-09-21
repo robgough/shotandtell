@@ -29,8 +29,7 @@ enum MainMenu {
         menu.addItem(withTitle: "About Shot and tell", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
         menu.addItem(.separator())
 
-        let settings = menu.addItem(withTitle: "Settings…", action: nil, keyEquivalent: ",")
-        settings.isEnabled = false  // TODO(phase 5): the Settings window.
+        menu.addItem(withTitle: "Settings…", action: #selector(AppDelegate.openSettings), keyEquivalent: ",")
 
         menu.addItem(.separator())
         menu.addItem(withTitle: "Hide Shot and tell", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")

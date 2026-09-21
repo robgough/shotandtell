@@ -25,14 +25,27 @@ enum Exporter {
         }
     }
 
+    /// Async, and genuinely off the main thread for the expensive part.
+    ///
+    /// `nonisolated` is not enough on its own: with approachable concurrency a
+    /// nonisolated function runs on its *caller's* actor, so composing and
+    /// encoding a full-screen capture — around a third of a second for a 6K
+    /// display — would freeze the app at exactly the moment the user pressed
+    /// Done. `Task.detached` is what actually moves it, and `Composition` is
+    /// Sendable so it can go.
     @discardableResult
-    static func export(_ composition: Composition, saveToDisk: Bool = true) throws -> Result {
+    static func export(_ composition: Composition) async throws -> Result {
+        let settings = Settings.shared
         let palette = Palette.resolve(background: composition.background, appearance: composition.appearance)
         let layout = CompositionLayout.solve(composition, palette: palette)
-        let scale = exportScale(for: layout.canvasSize)
+        let scale = exportScale(for: layout.canvasSize, setting: settings.exportScale)
 
-        let rendered = try Compositor.render(composition, scale: scale)
-        let png = try PNGEncoder.encode(rendered.image, scale: scale)
+        let (png, pixelWidth, pixelHeight) = try await Task.detached(priority: .userInitiated) {
+            let rendered = try Compositor.render(composition, scale: scale)
+            let png = try PNGEncoder.encode(rendered.image, scale: scale)
+            return (png, rendered.image.width, rendered.image.height)
+        }.value
+
         let markdown = MarkdownLegend.render(composition)
 
         // One pasteboard item carrying both: pasting into a chat gets the
@@ -45,23 +58,39 @@ enum Exporter {
         }
 
         var fileURL: URL?
-        if saveToDisk {
-            fileURL = try write(png, title: composition.title)
+        if settings.savesToDisk {
+            fileURL = try write(png, title: composition.title, settings: settings)
         }
 
-        Log.app.notice("Exported \(rendered.image.width, privacy: .public)×\(rendered.image.height, privacy: .public)px")
+        Log.app.notice("Exported \(pixelWidth, privacy: .public)×\(pixelHeight, privacy: .public)px")
         return Result(fileURL: fileURL, markdown: markdown)
     }
 
-    static func exportScale(for canvasSize: CGSize) -> CGFloat {
-        let longestEdge = max(canvasSize.width, canvasSize.height)
-        guard longestEdge > 0 else { return 2 }
-        return min(2, maximumPixelEdge / longestEdge)
+    static func exportScale(for canvasSize: CGSize, setting: Settings.ExportScale) -> CGFloat {
+        switch setting {
+        case .standard:
+            return 1
+        case .retinaFull:
+            return 2
+        case .retinaCapped:
+            let longestEdge = max(canvasSize.width, canvasSize.height)
+            guard longestEdge > 0 else { return 2 }
+            return min(2, maximumPixelEdge / longestEdge)
+        }
     }
 
-    private static func write(_ png: Data, title: String) throws -> URL {
-        // With the pictures entitlement this resolves to the real ~/Pictures
-        // rather than the sandbox container's copy of it.
+    private static func write(_ png: Data, title: String, settings: Settings) throws -> URL {
+        // A folder the user chose is reached through a security-scoped
+        // bookmark, and access has to be given back afterwards.
+        if let chosen = settings.resolveSaveFolder() {
+            defer { chosen.stopAccessing() }
+            let url = chosen.url.appending(path: filename(title: title))
+            try png.write(to: url, options: .atomic)
+            return url
+        }
+
+        // Otherwise the default. With the pictures entitlement this resolves to
+        // the real ~/Pictures rather than the sandbox container's copy of it.
         guard let pictures = FileManager.default.urls(for: .picturesDirectory, in: .userDomainMask).first else {
             throw Failure.noPicturesFolder
         }

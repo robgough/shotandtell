@@ -98,22 +98,11 @@ final class CaptureCoordinator {
     }
 
     private func deliver(_ captured: CapturedImage) {
-        if let onCaptured {
-            onCaptured(captured)
+        guard let onCaptured else {
+            Log.capture.error("Captured an image with nowhere to send it — no editor handler is installed")
             return
         }
-
-        // Phase 1 has no editor yet, so the capture goes straight to the
-        // clipboard. That already makes this a usable screenshot tool, which is
-        // a useful thing to be able to test against.
-        do {
-            let data = try PNGEncoder.encode(captured.image, scale: captured.scale)
-            NSPasteboard.general.clearContents()
-            NSPasteboard.general.setData(data, forType: .png)
-            Log.capture.notice("Copied capture to the clipboard")
-        } catch {
-            presentFailure(error)
-        }
+        onCaptured(captured)
     }
 
     private func countDown(_ delay: Duration) async {
@@ -134,7 +123,7 @@ final class CaptureCoordinator {
         alert.informativeText = error.localizedDescription
         alert.alertStyle = .warning
         alert.addButton(withTitle: "OK")
-        NSApp.activate(ignoringOtherApps: true)
+        NSApp.activate()
         alert.runModal()
     }
 }
