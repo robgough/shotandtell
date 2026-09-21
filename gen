@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# Regenerate ShotAndTell.xcodeproj from project.yml.
+#
+# Loads .env (if present) first so xcodegen can resolve ${SHOTANDTELL_TEAM_ID}
+# and friends. Without it xcodegen sees those as empty and the build falls back
+# to ad-hoc signing.
+
+set -euo pipefail
+cd "$(dirname "$0")"
+
+if [ -f .env ]; then
+    set -a
+    # shellcheck disable=SC1091
+    . ./.env
+    set +a
+fi
+
+if [ -z "${SHOTANDTELL_TEAM_ID:-}" ]; then
+    echo "⚠️  SHOTANDTELL_TEAM_ID not set — the build will use ad-hoc signing." >&2
+    echo "    It still builds and runs, but macOS re-prompts for Screen Recording" >&2
+    echo "    after every clean build, because TCC keys that grant to the signature." >&2
+    echo "    Add SHOTANDTELL_TEAM_ID=YOUR10CHARID to a .env file here to fix it." >&2
+    echo "" >&2
+fi
+
+# Fall back to ad-hoc signing rather than *no* signing. An unsigned binary
+# can't carry entitlements at all, so an empty identity here would quietly
+# produce a build with no sandbox — which both warns at build time and hides
+# sandbox violations until submission. Ad-hoc signing applies the entitlements
+# properly; the only thing it costs is a signature that changes every build.
+: "${SHOTANDTELL_CODE_SIGN_IDENTITY:=-}"
+: "${SHOTANDTELL_CODE_SIGN_STYLE:=Manual}"
+export SHOTANDTELL_CODE_SIGN_IDENTITY SHOTANDTELL_CODE_SIGN_STYLE
+
+exec xcodegen generate "$@"

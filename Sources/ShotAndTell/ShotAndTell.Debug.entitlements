@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Debug entitlements. The App Store requires the sandbox; everything
+	     below is the smallest set of holes in it that the app actually needs.
+
+	     Note what is NOT here: com.apple.security.network.client. Shot and tell
+	     makes no network connections whatsoever — no updates, no analytics, no
+	     uploads. Leaving the entitlement out means it *cannot*, which is worth
+	     more at review time than any promise in the description field.
+
+	     Screen recording needs no entitlement at all: ScreenCaptureKit works
+	     inside the sandbox and the user's consent is handled by TCC. -->
+	<key>com.apple.security.app-sandbox</key>
+	<true/>
+
+	<!-- Debugger attach. True here so Xcode can attach to local builds; the
+	     Release file sets it false, because the App Store rejects binaries
+	     that ship with it set. This is the ONLY difference between the two
+	     files — keep any other change in sync across both. -->
+	<key>com.apple.security.get-task-allow</key>
+	<true/>
+
+	<!-- The default save location, ~/Pictures/Shot and tell/. A sandboxed app
+	     has no access to ~/Pictures without this. -->
+	<key>com.apple.security.assets.pictures.read-write</key>
+	<true/>
+
+	<!-- If the user picks a different folder to save into, they pick it through
+	     an NSOpenPanel (user-selected) and we keep a security-scoped bookmark
+	     (bookmarks.app-scope) so it still works next launch. -->
+	<key>com.apple.security.files.user-selected.read-write</key>
+	<true/>
+	<key>com.apple.security.files.bookmarks.app-scope</key>
+	<true/>
+</dict>
+</plist>

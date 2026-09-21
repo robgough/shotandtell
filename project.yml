@@ -1,0 +1,159 @@
+name: ShotAndTell
+options:
+  bundleIdPrefix: net.robgough
+  deploymentTarget:
+    macOS: "26.0"
+  createIntermediateGroups: true
+  schemePathPrefix: ""
+
+schemes:
+  ShotAndTell:
+    build:
+      targets:
+        ShotAndTell: all
+    run:
+      config: Debug
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
+
+# No SwiftPM dependencies, deliberately. Everything this app needs is in the
+# macOS SDK (ScreenCaptureKit, Core Graphics, AppKit, SwiftUI), and a zero-
+# dependency app is faster to build, has nothing to keep pinned, and gives App
+# Store review nothing to ask about.
+
+targets:
+  ShotAndTell:
+    type: application
+    platform: macOS
+    sources:
+      - path: Sources/ShotAndTell
+      # Platform-light core: document model, numbering, compositor, markdown
+      # legend. Compiled straight into the app rather than built as a framework
+      # — no module boundary to maintain and no `public` churn — but kept in its
+      # own folder so an iOS/iPadOS target can pick it up later by adding one
+      # line here. Nothing in this folder may import AppKit or ScreenCaptureKit.
+      - path: Sources/ShotAndTellKit
+    postBuildScripts:
+      - script: |
+          # Install a stable copy of the built .app at ~/Applications. macOS TCC
+          # keys the Screen Recording grant by signed identity AND launch path,
+          # and the DerivedData path changes after every Clean Build Folder — so
+          # without this, every clean build re-prompts for screen recording.
+          # Launch ~/Applications/Shot and tell.app instead and the grant sticks.
+          set -e
+          mkdir -p "$HOME/Applications"
+          DEST="$HOME/Applications/${PRODUCT_NAME}.app"
+          rm -rf "$DEST"
+          # `ditto` preserves bundle metadata. `cp -R` doesn't.
+          ditto "$BUILT_PRODUCTS_DIR/${PRODUCT_NAME}.app" "$DEST"
+
+          # This phase runs BEFORE Xcode's own CodeSign phase, so the copy we
+          # just made is unsigned. Re-sign it with the same identity Xcode is
+          # about to use, and with the same entitlements — a sandboxed app that
+          # loses its entitlements at this step won't launch at all.
+          #
+          # `--deep` because Debug builds nest ShotAndTell.debug.dylib inside the
+          # bundle (Xcode's debug-dylib split, for faster incremental builds) and
+          # it arrives unsigned — signing only the outer bundle fails with "code
+          # object is not signed at all". `--deep` is the wrong tool for a
+          # *shipping* build, but this copy exists purely so local runs have a
+          # stable path for TCC; the App Store archive is signed by Xcode, not
+          # by this script.
+          IDENT="${EXPANDED_CODE_SIGN_IDENTITY:-${EXPANDED_CODE_SIGN_IDENTITY_NAME:-}}"
+          ENT_FLAG=""
+          if [ -n "${CODE_SIGN_ENTITLEMENTS:-}" ] && [ -f "$CODE_SIGN_ENTITLEMENTS" ]; then
+              ENT_FLAG="--entitlements $CODE_SIGN_ENTITLEMENTS"
+          fi
+          if [ -n "$IDENT" ] && [ "$IDENT" != "-" ]; then
+              codesign --force --deep --options runtime --sign "$IDENT" $ENT_FLAG "$DEST" \
+                  && echo "Installed and signed: $DEST ($IDENT)"
+          else
+              codesign --force --deep --sign - $ENT_FLAG "$DEST"
+              echo "Installed (ad-hoc): $DEST"
+          fi
+        name: "Install to ~/Applications"
+        basedOnDependencyAnalysis: false
+    info:
+      path: Sources/ShotAndTell/Info.plist
+      properties:
+        # FALSE, deliberately, and this is load-bearing: Shot and tell has a Dock
+        # icon *and* a menu bar item. Clicking the Dock icon is one of the three
+        # ways to start a capture (see AppDelegate.applicationShouldHandleReopen),
+        # which an LSUIElement accessory app could never offer.
+        LSUIElement: false
+        LSMinimumSystemVersion: "26.0"
+        CFBundleName: ShotAndTell
+        CFBundleDisplayName: Shot and tell
+        # There is no MainMenu.xib — `@main` lives on AppDelegate and the menu
+        # bar is built in code (see MainMenu.swift). NSApplication is the default
+        # principal class when this key is absent, but being explicit saves the
+        # next person working out why there's no nib.
+        NSPrincipalClass: NSApplication
+        # Kept as $() refs so a CI `xcodebuild MARKETING_VERSION=...` override
+        # actually reaches the shipped Info.plist instead of losing to a literal.
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        NSHumanReadableCopyright: "Copyright © 2026 Rob Gough. MIT licensed."
+        # Screen Recording has no Info.plist purpose string on macOS — unlike the
+        # microphone or camera, the system composes that prompt itself and there
+        # is no key to override it. The explaining has to happen in our own
+        # first-run UI instead (phase 5).
+        #
+        # Saves answering the export-compliance question on every single App
+        # Store submission. True, too: this app makes no network connections at
+        # all and has no entitlement that would let it.
+        ITSAppUsesNonExemptEncryption: false
+    # Two entitlements files, swapped per build config below. The only difference
+    # is `get-task-allow` (Debug → true so the debugger can attach; Release →
+    # false because the App Store rejects it). Both are checked in and hand-owned
+    # — no `entitlements:` block here, because xcodegen would generate a single
+    # file and clobber one of them on every `./gen`.
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: net.robgough.ShotAndTell
+        PRODUCT_NAME: ShotAndTell
+        ARCHS: arm64
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        SWIFT_VERSION: "6.0"
+        MACOSX_DEPLOYMENT_TARGET: "26.0"
+        # Swift 6 language mode with MainActor as the default isolation. This app
+        # is almost entirely UI and lives on the main actor; making that the
+        # default means the handful of genuinely concurrent things (the
+        # ScreenCaptureKit grab, PNG encoding) are the ones that have to say so,
+        # rather than every view and controller carrying an @MainActor tag.
+        SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+        SWIFT_APPROACHABLE_CONCURRENCY: YES
+        ENABLE_HARDENED_RUNTIME: YES
+        # macOS TCC keys the Screen Recording grant by *signed identity*, so an
+        # unstable signature (ad-hoc) makes the OS forget you on every rebuild.
+        # Three optional env vars pin it to a real certificate:
+        #   - SHOTANDTELL_TEAM_ID            : your 10-char Apple team ID
+        #   - SHOTANDTELL_CODE_SIGN_IDENTITY : SHA-1 of the cert, from
+        #                                      `security find-identity -v -p codesigning`
+        #   - SHOTANDTELL_CODE_SIGN_STYLE    : "Manual" — automatic style wants
+        #                                      GUI provisioning that CLI builds
+        #                                      can't trigger.
+        # All three unset → ad-hoc signing, which builds and runs fine but
+        # re-prompts for screen recording after every clean build. See `./gen`.
+        DEVELOPMENT_TEAM: ${SHOTANDTELL_TEAM_ID}
+        CODE_SIGN_IDENTITY: ${SHOTANDTELL_CODE_SIGN_IDENTITY}
+        CODE_SIGN_STYLE: ${SHOTANDTELL_CODE_SIGN_STYLE}
+        # Manual signing needs an explicit (possibly empty) profile specifier so
+        # xcodebuild doesn't go looking for one. Local sandboxed debug builds
+        # don't need a profile; the App Store archive will supply one.
+        PROVISIONING_PROFILE_SPECIFIER: ""
+        GENERATE_INFOPLIST_FILE: NO
+        DEAD_CODE_STRIPPING: YES
+        # Xcode sandboxes script phases by default, which denies the
+        # "Install to ~/Applications" phase both the read and the write.
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
+      configs:
+        Debug:
+          CODE_SIGN_ENTITLEMENTS: Sources/ShotAndTell/ShotAndTell.Debug.entitlements
+        Release:
+          CODE_SIGN_ENTITLEMENTS: Sources/ShotAndTell/ShotAndTell.entitlements
