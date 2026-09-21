@@ -193,17 +193,14 @@ struct EditorView: View {
 
             Button("Custom…") { showColourPanel() }
         } label: {
-            Label {
-                Text("Marker")
-            } icon: {
-                Circle()
-                    .fill(Color(cgColor: palette.marker))
-                    .frame(width: 11, height: 11)
-            }
+            // The dot alone. A label saying "Marker" next to a coloured circle
+            // is telling people something the circle already told them.
+            Circle()
+                .fill(Color(cgColor: palette.marker))
+                .frame(width: 13, height: 13)
         }
         .menuStyle(.button)
         .buttonStyle(.glass)
-        .labelStyle(.titleAndIcon)
         .fixedSize()
         .help("Colour of the numbers, arrows and boxes")
     }

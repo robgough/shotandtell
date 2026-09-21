@@ -225,12 +225,38 @@ final class SelectionOverlayView: NSView {
         (text as NSString).draw(at: origin, withAttributes: attributes)
     }
 
+    /// Screen mode: the display under the pointer is the target, the others are
+    /// dimmed out.
+    ///
+    /// The target gets a *faint tint* rather than being left clear, and that is
+    /// load-bearing rather than decorative. The overlay is a transparent window;
+    /// in the other two modes it paints the frozen screenshot across itself, so
+    /// it's opaque everywhere and every click lands. Screen mode takes no
+    /// screenshot — it doesn't need one — so punching a hole the size of the
+    /// whole display left the window completely transparent, and the window
+    /// server routed the click straight through to whatever was underneath. The
+    /// highlight followed the pointer between displays and nothing could ever be
+    /// clicked, which is precisely how it was reported.
     private func drawScreenPick() {
-        // The whole screen is the target, so this view either highlights all of
-        // itself or dims all of itself, depending on where the pointer is.
         let pointerIsHere = session.pointer.map { bounds.contains(local($0)) } ?? false
-        drawHighlight(pointerIsHere ? bounds.insetBy(dx: 1, dy: 1) : nil,
-                      label: pointerIsHere ? "\(Int(bounds.width)) × \(Int(bounds.height))" : nil)
+
+        guard pointerIsHere else {
+            dimEverything(except: nil)
+            return
+        }
+
+        NSColor.black.withAlphaComponent(0.06).setFill()
+        bounds.fill()
+
+        NSColor.controlAccentColor.setStroke()
+        let border = NSBezierPath(rect: bounds.insetBy(dx: 3, dy: 3))
+        border.lineWidth = 6
+        border.stroke()
+
+        if let pointer = session.pointer.map(local) {
+            drawReadout("\(Int(bounds.width)) × \(Int(bounds.height))", near: CGRect(origin: pointer, size: .zero))
+            drawHint("Click to capture this screen", below: pointer)
+        }
     }
 
     private func drawCrosshair(at point: CGPoint) {

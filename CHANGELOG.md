@@ -11,7 +11,8 @@ don't.
 ## Unreleased
 
 - Take a screenshot by dragging out a region, clicking a window, or picking a
-  whole screen, with an optional 3, 5 or 10 second timer.
+  whole screen, with an optional 3, 5 or 10 second timer. Picking a whole screen
+  now says what to click, and the click works.
 - The screen freezes while you choose what to capture, and a magnifier follows
   the pointer showing the exact pixel under the crosshair with its coordinates.
 - Press Space while choosing to switch between dragging a region and clicking a
