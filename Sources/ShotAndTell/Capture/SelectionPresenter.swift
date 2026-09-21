@@ -29,12 +29,22 @@ enum SelectionPresenter {
 
             windows = NSScreen.screens.map { SelectionOverlayWindow(screen: $0, session: session) }
 
-            // Escape has to work whichever display is key, and a key-down that
-            // arrives while no overlay is key would otherwise be lost.
+            // Every key the overlay understands is handled here rather than in
+            // the view's keyDown. Only one window can be key, the views are
+            // never made first responder, and a key-down arriving while none of
+            // them is key would simply be lost — which is exactly what happened
+            // to Space, while Escape worked because it had this monitor.
             monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
-                guard event.keyCode == 53 else { return event }
-                session.cancel()
-                return nil
+                switch event.keyCode {
+                case 53: // Escape
+                    session.cancel()
+                    return nil
+                case 49: // Space — toggle between region and window.
+                    session.toggleWindowMode()
+                    return nil
+                default:
+                    return event
+                }
             }
 
             // Overlays are positioned from the screen layout captured a moment
@@ -55,6 +65,11 @@ enum SelectionPresenter {
             let pointer = NSEvent.mouseLocation
             let preferred = windows.first { $0.frame.contains(pointer) } ?? windows.first
             preferred?.makeKey()
+            // Also give the view first responder, so its own keyDown works and
+            // the monitor isn't the only thing holding this together.
+            if let preferred, let view = preferred.contentView {
+                preferred.makeFirstResponder(view)
+            }
         }
 
         if let monitor { NSEvent.removeMonitor(monitor) }

@@ -15,7 +15,8 @@ don't.
 - The screen freezes while you choose what to capture, and a magnifier follows
   the pointer showing the exact pixel under the crosshair with its coordinates.
 - Press Space while choosing to switch between dragging a region and clicking a
-  window, the same way the system screenshot tool works.
+  window, the same way the system screenshot tool works. The overlay says so,
+  and names the window you're about to take.
 - A global keyboard shortcut starts a capture from any app — ⌃⇧S to begin with,
   changeable in Settings.
 - Settings for the shortcut, what the Dock icon does, the default background and

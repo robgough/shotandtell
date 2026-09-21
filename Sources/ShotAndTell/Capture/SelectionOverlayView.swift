@@ -45,7 +45,7 @@ final class SelectionOverlayView: NSView {
 
         switch session.mode {
         case .region: drawRegion()
-        case .window: drawHighlight(session.hovered.map { local($0.cocoaFrame) }, label: session.hovered?.title)
+        case .window: drawWindowPick()
         case .screen: drawScreenPick()
         }
     }
@@ -95,6 +95,9 @@ final class SelectionOverlayView: NSView {
 
         if let pointer = session.pointer.map(local), bounds.contains(pointer) {
             drawLoupe(at: pointer)
+            if session.selection == nil {
+                drawHint("Space to pick a window instead", below: pointer)
+            }
         }
     }
 
@@ -187,6 +190,39 @@ final class SelectionOverlayView: NSView {
         if let label, !label.isEmpty {
             drawReadout(label, near: rect)
         }
+    }
+
+    /// Window mode. The title goes next to the pointer rather than under the
+    /// highlighted rectangle: a browser window can fill the whole display, and
+    /// a label pinned to its edge then ends up somewhere you'd never look —
+    /// which makes the mode look like it did nothing at all.
+    private func drawWindowPick() {
+        let rect = session.hovered.map { local($0.cocoaFrame) }
+        drawHighlight(rect, label: nil)
+
+        guard let pointer = session.pointer.map(local), bounds.contains(pointer) else { return }
+        let title = session.hovered?.title ?? "No window here"
+        drawReadout(title, near: CGRect(origin: pointer, size: .zero))
+        drawHint("Space to drag a region instead", below: pointer)
+    }
+
+    /// The thing you can press, said out loud. Space toggling between region and
+    /// window is a real macOS convention, but nothing about a crosshair
+    /// advertises it.
+    private func drawHint(_ text: String, below point: CGPoint) {
+        let attributes: [NSAttributedString.Key: Any] = [
+            .font: NSFont.systemFont(ofSize: 11, weight: .regular),
+            .foregroundColor: NSColor.white.withAlphaComponent(0.85),
+        ]
+        let size = (text as NSString).size(withAttributes: attributes)
+        var origin = CGPoint(x: point.x - size.width / 2, y: point.y - 44)
+        origin.x = min(max(origin.x, bounds.minX + 8), bounds.maxX - size.width - 8)
+        origin.y = min(max(origin.y, bounds.minY + 8), bounds.maxY - size.height - 8)
+
+        let padded = CGRect(origin: origin, size: size).insetBy(dx: -7, dy: -4)
+        NSColor.black.withAlphaComponent(0.6).setFill()
+        NSBezierPath(roundedRect: padded, xRadius: 5, yRadius: 5).fill()
+        (text as NSString).draw(at: origin, withAttributes: attributes)
     }
 
     private func drawScreenPick() {
