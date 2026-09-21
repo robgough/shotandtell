@@ -42,6 +42,10 @@ don't.
   mistake or think of something else to point at.
 - The editor puts the tools in the window's own toolbar, fills the window with
   the background you'll get, and puts the legend in a resizable inspector.
+- Copy & Close has a menu beside it for Save & Close, and for turning saving on
+  or off without opening Settings.
+- The background picker sits on the composition it changes rather than in the
+  header.
 - Closing an editor with marks on it asks first, from ⌘W or the red button.
 - The menu bar can reveal the last saved screenshot in the Finder.
 - The framing never touches the screenshot's own pixels: the hairline sits

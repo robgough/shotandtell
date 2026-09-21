@@ -54,6 +54,7 @@ final class EditorWindowController: NSWindowController, NSWindowDelegate {
             rootView: EditorView(
                 document: editorDocument,
                 onDone: { [weak self] in self?.finish() },
+                onSaveAndClose: { [weak self] in self?.finish(.saveOnly) },
                 onCopy: { [weak self] in self?.copyOnly() }
             )
         )
@@ -91,8 +92,14 @@ final class EditorWindowController: NSWindowController, NSWindowDelegate {
     /// later. Not called `document`: NSWindowController already has one.
     var capturedDocument: EditorDocument { editorDocument }
 
-    private func finish() {
-        Task { await finishExport() }
+    private func finish(_ options: Exporter.Options? = nil) {
+        // Nil means "the standing preference": copy, and save too unless the
+        // user has turned saving off.
+        let resolved = options ?? Exporter.Options(
+            copiesToClipboard: true,
+            savesToDisk: Settings.shared.savesToDisk
+        )
+        Task { await finishExport(resolved) }
     }
 
     /// Copy without saving or closing — for when you want the image now and
@@ -100,7 +107,7 @@ final class EditorWindowController: NSWindowController, NSWindowDelegate {
     private func copyOnly() {
         Task {
             do {
-                _ = try await Exporter.export(editorDocument.composition, saveToDisk: false)
+                _ = try await Exporter.export(editorDocument.composition, options: .copyOnly)
             } catch {
                 present(error)
             }
@@ -145,9 +152,9 @@ final class EditorWindowController: NSWindowController, NSWindowDelegate {
         close()
     }
 
-    private func finishExport() async {
+    private func finishExport(_ options: Exporter.Options) async {
         do {
-            let result = try await Exporter.export(editorDocument.composition)
+            let result = try await Exporter.export(editorDocument.composition, options: options)
             if let url = result.fileURL {
                 Log.app.notice("Saved to \(url.lastPathComponent, privacy: .public)")
                 onExported(url)

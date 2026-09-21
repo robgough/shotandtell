@@ -9,6 +9,7 @@ import SwiftUI
 struct EditorView: View {
     @Bindable var document: EditorDocument
     let onDone: () -> Void
+    let onSaveAndClose: () -> Void
     let onCopy: () -> Void
 
     @FocusState private var focusedEntry: UUID?
@@ -32,20 +33,22 @@ struct EditorView: View {
         // The composition runs under the floating toolbar; the canvas fits
         // itself into the safe area so nothing important hides behind it.
         .ignoresSafeArea(edges: .top)
+        // Over the composition rather than up in the toolbar. It changes how the
+        // background looks, it's set rarely, and the header is for the things
+        // you reach for every time.
+        .overlay(alignment: .bottomTrailing) {
+            backgroundMenu
+                .padding(16)
+        }
         .inspector(isPresented: .constant(true)) {
             legend.inspectorColumnWidth(min: 260, ideal: 300, max: 420)
         }
         .toolbar {
             ToolbarItem(placement: .navigation) { toolSelector }
             ToolbarSpacer(.flexible)
-            ToolbarItem { backgroundMenu }
-            ToolbarSpacer(.fixed)
             ToolbarItemGroup(placement: .primaryAction) {
                 copyMenu
-                Button("Copy & Close", action: onDone)
-                    .keyboardShortcut(.return, modifiers: .command)
-                    .buttonStyle(.glassProminent)
-                    .help(doneHelp)
+                finishMenu
             }
         }
         .onChange(of: document.pendingFocus) { _, id in
@@ -131,6 +134,29 @@ struct EditorView: View {
         .help("Copy the finished image and leave this window open (⌥⌘C)")
     }
 
+    /// The primary way out, with the variations behind its chevron rather than
+    /// as more buttons: most of the time you want all of it, and when you don't
+    /// you want to say so once.
+    private var finishMenu: some View {
+        Menu {
+            Button("Save & Close", action: onSaveAndClose)
+                .help("Write the PNG without touching the clipboard")
+            Divider()
+            Toggle("Always Save a PNG", isOn: Binding(
+                get: { Settings.shared.savesToDisk },
+                set: { Settings.shared.savesToDisk = $0 }
+            ))
+        } label: {
+            Text("Copy & Close")
+        } primaryAction: {
+            onDone()
+        }
+        .menuStyle(.button)
+        .buttonStyle(.glassProminent)
+        .keyboardShortcut(.return, modifiers: .command)
+        .help(doneHelp)
+    }
+
     private var backgroundMenu: some View {
         Menu {
             Picker("Background", selection: $document.composition.background) {
@@ -157,16 +183,16 @@ struct EditorView: View {
             Label("Background", systemImage: "paintpalette")
         }
         .menuStyle(.button)
-        // A unified-compact toolbar collapses a Label to its icon, and a lone
-        // paintpalette glyph is a guess rather than a control.
+        .buttonStyle(.glass)
         .labelStyle(.titleAndIcon)
+        .fixedSize()
         .help("Background and appearance of the finished image")
     }
 
     private var doneHelp: String {
         Settings.shared.savesToDisk
             ? "Copies the finished image, saves a PNG to \(Settings.shared.saveFolderDisplayName), and closes (⌘↩)"
-            : "Copies the finished image and closes (⌘↩)"
+            : "Copies the finished image and closes, without saving a file (⌘↩)"
     }
 
     // MARK: - Legend

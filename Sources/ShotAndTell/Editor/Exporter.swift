@@ -33,8 +33,22 @@ enum Exporter {
     /// display — would freeze the app at exactly the moment the user pressed
     /// Done. `Task.detached` is what actually moves it, and `Composition` is
     /// Sendable so it can go.
+    /// What finishing a capture should actually do.
+    ///
+    /// Separated because the three ways out of the editor want different
+    /// combinations: Copy & Close copies (and saves, if that's the standing
+    /// preference), Save & Close writes a file without touching the clipboard,
+    /// and the plain Copy button copies without leaving a file behind.
+    struct Options {
+        var copiesToClipboard = true
+        var savesToDisk = true
+
+        static let copyOnly = Options(copiesToClipboard: true, savesToDisk: false)
+        static let saveOnly = Options(copiesToClipboard: false, savesToDisk: true)
+    }
+
     @discardableResult
-    static func export(_ composition: Composition, saveToDisk: Bool = true) async throws -> Result {
+    static func export(_ composition: Composition, options: Options = Options()) async throws -> Result {
         let settings = Settings.shared
         let palette = Palette.resolve(background: composition.background, appearance: composition.appearance)
         let layout = CompositionLayout.solve(composition, palette: palette)
@@ -53,15 +67,17 @@ enum Exporter {
         // prefers text pastes the words and drops the picture — which is the
         // opposite of what pressing a button labelled "copy the screenshot"
         // should do.
-        let pasteboard = NSPasteboard.general
-        pasteboard.clearContents()
-        pasteboard.setData(png, forType: .png)
-        if settings.copiesLegendText, !markdown.isEmpty {
-            pasteboard.setString(markdown, forType: .string)
+        if options.copiesToClipboard {
+            let pasteboard = NSPasteboard.general
+            pasteboard.clearContents()
+            pasteboard.setData(png, forType: .png)
+            if settings.copiesLegendText, !markdown.isEmpty {
+                pasteboard.setString(markdown, forType: .string)
+            }
         }
 
         var fileURL: URL?
-        if saveToDisk, settings.savesToDisk {
+        if options.savesToDisk {
             fileURL = try write(png, title: composition.title, settings: settings)
         }
 
