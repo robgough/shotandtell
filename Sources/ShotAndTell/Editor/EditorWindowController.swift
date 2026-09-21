@@ -11,10 +11,16 @@ final class EditorWindowController: NSWindowController, NSWindowDelegate {
     /// for NSDocument-based apps, which this isn't.
     private let editorDocument: EditorDocument
     private let onClose: (EditorWindowController) -> Void
+    private let onExported: (URL) -> Void
 
-    init(capture: CapturedImage, onClose: @escaping (EditorWindowController) -> Void) {
+    init(
+        capture: CapturedImage,
+        onExported: @escaping (URL) -> Void,
+        onClose: @escaping (EditorWindowController) -> Void
+    ) {
         self.editorDocument = EditorDocument(capture: capture)
         self.onClose = onClose
+        self.onExported = onExported
 
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 1040, height: 660),
@@ -22,7 +28,7 @@ final class EditorWindowController: NSWindowController, NSWindowDelegate {
             backing: .buffered,
             defer: false
         )
-        window.title = "Shot and tell"
+        window.title = "Shot and Tell"
         window.isReleasedWhenClosed = false
         window.setFrameAutosaveName("EditorWindow")
 
@@ -67,6 +73,7 @@ final class EditorWindowController: NSWindowController, NSWindowDelegate {
             let result = try await Exporter.export(editorDocument.composition)
             if let url = result.fileURL {
                 Log.app.notice("Saved to \(url.lastPathComponent, privacy: .public)")
+                onExported(url)
             }
             close()
         } catch {

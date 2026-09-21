@@ -42,13 +42,13 @@ enum ScreenRecordingPermission {
     /// Shown after ScreenCaptureKit has refused.
     static func explainDenial() {
         let alert = NSAlert()
-        alert.messageText = "Shot and tell needs permission to record the screen"
+        alert.messageText = "Shot and Tell needs permission to record the screen"
         alert.informativeText = """
             Taking a screenshot counts as screen recording on macOS, so it's the \
             same permission. Nothing is recorded continuously and nothing leaves \
             your Mac — the app has no network access at all.
 
-            Turn on Shot and tell under Screen & System Audio Recording, then try \
+            Turn on Shot and Tell under Screen & System Audio Recording, then try \
             again.
             """
         alert.alertStyle = .informational

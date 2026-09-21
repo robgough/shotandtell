@@ -49,19 +49,22 @@ nonisolated struct CompositionLayout: Sendable {
 
     // MARK: - Solving
 
-    static func solve(_ composition: Composition, palette: Palette) -> CompositionLayout {
+    /// `includeLegend` is false for the editor's canvas, which shows the capture
+    /// framed on its background but leaves the legend to the panel beside it —
+    /// no point rendering the same list twice, side by side.
+    static func solve(_ composition: Composition, palette: Palette, includeLegend: Bool = true) -> CompositionLayout {
         let padding = composition.background == .bare ? barePadding : self.padding
         let captureSize = composition.capture.pointSize
 
-        let entriesText = composition.numbered.map { (number: $0.number, text: $0.annotation.text) }
-        let hasLegend = !composition.legendIsEmpty
+        let entriesText = includeLegend ? composition.numbered.map { (number: $0.number, text: $0.annotation.text) } : []
+        let hasLegend = includeLegend && !composition.legendIsEmpty
         let hasRedactionKey = !composition.redactions.isEmpty && hasLegend
 
         let legendWidth = hasLegend ? legendColumnWidth(title: composition.title, entries: entriesText, beside: captureSize.width) : 0
 
         // Measure the legend's height before the canvas exists, since the canvas
         // has to be tall enough for whichever column is taller.
-        let titleBlock = composition.title.isEmpty ? nil : TextBlock(composition.title, font: titleFont(), colour: palette.ink)
+        let titleBlock = (!hasLegend || composition.title.isEmpty) ? nil : TextBlock(composition.title, font: titleFont(), colour: palette.ink)
         let titleHeight = titleBlock?.height(constrainedTo: legendWidth) ?? 0
 
         let textWidth = legendWidth - badgeDiameter - badgeTextGap

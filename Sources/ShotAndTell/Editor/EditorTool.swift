@@ -38,13 +38,34 @@ enum EditorTool: String, CaseIterable, Identifiable, Sendable {
         }
     }
 
+    /// A bare letter, plus its position as a digit. No modifier: the canvas
+    /// only sees these when it has focus, and when focus is in a description
+    /// field the same keys type, which is what you want.
+    var shortcut: Character {
+        switch self {
+        case .select: "v"
+        case .pin: "p"
+        case .arrow: "a"
+        case .box: "b"
+        case .redact: "r"
+        }
+    }
+
+    var shortcutDigit: Character {
+        Character("\(Self.allCases.firstIndex(of: self)! + 1)")
+    }
+
+    static func named(by key: Character) -> EditorTool? {
+        allCases.first { $0.shortcut == key || $0.shortcutDigit == key }
+    }
+
     var help: String {
         switch self {
-        case .select: "Select and move marks"
-        case .pin: "Click to drop a numbered pin"
-        case .arrow: "Drag to draw a numbered arrow"
-        case .box: "Drag a numbered box around something"
-        case .redact: "Drag a box over anything that should be hidden"
+        case .select: "Select and move marks  (V)"
+        case .pin: "Click to drop a numbered pin  (P)"
+        case .arrow: "Drag to draw a numbered arrow  (A)"
+        case .box: "Drag a numbered box around something  (B)"
+        case .redact: "Drag a box over anything that should be hidden  (R)"
         }
     }
 }

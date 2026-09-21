@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 import SwiftUI
 
 /// The "click, then press the keys you want" control.
@@ -39,6 +40,18 @@ struct HotkeyRecorder: View {
             }
         }
         .onDisappear(perform: stop)
+        // onDisappear is not enough. The Settings window is a shared controller
+        // with isReleasedWhenClosed false, so closing it orders the window out
+        // without tearing down the hosting view — leaving a local key monitor
+        // installed application-wide. It would then swallow plain keystrokes
+        // everywhere, and the next ⌘-combination typed anywhere in the app
+        // would silently become the global shortcut.
+        .onReceive(NotificationCenter.default.publisher(for: NSWindow.willCloseNotification)) { _ in
+            stop()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSWindow.didResignKeyNotification)) { _ in
+            stop()
+        }
     }
 
     private var label: String {

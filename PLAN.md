@@ -1,4 +1,4 @@
-# Shot and tell — build plan
+# Shot and Tell — build plan
 
 A macOS screenshot tool for talking to AI about pictures. You capture, you point at
 things with numbered markers and describe them, and you get back a single image with
@@ -26,7 +26,7 @@ exports; it is signed, sandboxed and App Store ready but not yet submitted.
 | Output size | **2x, long edge capped ~2400pt** so files stay paste-able. |
 | Pricing | **Free, no IAP.** No StoreKit code. |
 
-App Store name "Shot and tell" confirmed free. Still open: app icon, bundle ID,
+App Store name "Shot and Tell" confirmed free. Still open: app icon, bundle ID,
 marketing site.
 
 ## Shape of the app
@@ -133,7 +133,7 @@ retrofitting:
   overlay and will always need it.
 - **Saving to ~/Pictures** — a sandboxed app has no free access to it. Use the
   `com.apple.security.assets.pictures.read-write` entitlement for the default
-  `~/Pictures/Shot and tell/` folder; if the user picks a different folder, hold a
+  `~/Pictures/Shot and Tell/` folder; if the user picks a different folder, hold a
   security-scoped bookmark.
 - **Global hotkey** — `RegisterEventHotKey` (Carbon) works in the sandbox and needs no
   Accessibility grant, and is still un-deprecated in the macOS 27 SDK.

@@ -2,10 +2,15 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<!-- Required for App Store submission. All four answers are the empty,
-	     honest ones: Shot and tell collects nothing, tracks nobody, contacts no
-	     server, and uses no API in the "required reason" list. If that ever
-	     stops being true, this file has to change in the same commit. -->
+	<!-- Required for App Store submission. Shot and Tell collects nothing,
+	     tracks nobody and contacts no server — it has no network entitlement,
+	     so it couldn't. If that ever stops being true, this file changes in the
+	     same commit.
+
+	     The one "required reason" API it does use is UserDefaults, for its own
+	     settings. Apple's enforcement of that list is aimed at the iOS family
+	     rather than macOS, but declaring it is five lines and removes a reason
+	     for a submission to stall. -->
 	<key>NSPrivacyTracking</key>
 	<false/>
 	<key>NSPrivacyTrackingDomains</key>
@@ -13,6 +18,16 @@
 	<key>NSPrivacyCollectedDataTypes</key>
 	<array/>
 	<key>NSPrivacyAccessedAPITypes</key>
-	<array/>
+	<array>
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<!-- CA92.1: read and write only this app's own settings. -->
+				<string>CA92.1</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

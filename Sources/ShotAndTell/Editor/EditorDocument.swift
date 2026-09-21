@@ -22,6 +22,17 @@ final class EditorDocument {
     /// Set when a new annotation is created, so the legend can move the cursor
     /// into its description field. Cleared once the field has taken focus.
     var pendingFocus: UUID?
+    /// Bumped when focus should go back to the canvas — after Escape in a
+    /// description field — so the single-key tool shortcuts work again.
+    private(set) var canvasFocusRequests = 0
+
+    func focusCanvas() {
+        canvasFocusRequests &+= 1
+    }
+
+    /// True while the on-device model is looking at the capture. Shown in the
+    /// legend so an empty title field doesn't just sit there looking broken.
+    private(set) var isSuggestingTitle = false
 
     @ObservationIgnored let undoManager = UndoManager()
 
@@ -34,6 +45,31 @@ final class EditorDocument {
             background: Settings.shared.defaultBackground,
             appearance: Settings.shared.resolvedAppearance()
         )
+
+        if composition.title.isEmpty {
+            suggestTitle()
+        }
+    }
+
+    /// Fills the title in from the on-device model, if there is one and the user
+    /// hasn't started typing one themselves.
+    ///
+    /// Only when the field is empty — a window capture already prefills the
+    /// app's name, and replacing something concrete with a guess is a poor
+    /// trade. The check is repeated after the model answers, because it takes a
+    /// moment and the user may well have typed in the meantime.
+    private func suggestTitle() {
+        guard #available(macOS 27, *), TitleSuggester.isAvailable else { return }
+
+        isSuggestingTitle = true
+        let image = composition.capture.image
+        Task { [weak self] in
+            let suggestion = await TitleSuggester.suggest(for: image)
+            guard let self else { return }
+            isSuggestingTitle = false
+            guard let suggestion, composition.title.isEmpty else { return }
+            composition.title = suggestion
+        }
     }
 
     // MARK: - Editing
@@ -54,6 +90,14 @@ final class EditorDocument {
         mutate("Move Mark", coalescing: true) { annotations in
             guard let index = annotations.firstIndex(where: { $0.id == id }) else { return }
             annotations[index].move(by: delta)
+        }
+    }
+
+    /// Used by the canvas's resize handles.
+    func setKind(_ kind: Annotation.Kind, for id: UUID) {
+        mutate("Resize Mark", coalescing: true) { annotations in
+            guard let index = annotations.firstIndex(where: { $0.id == id }) else { return }
+            annotations[index].kind = kind
         }
     }
 
@@ -91,14 +135,39 @@ final class EditorDocument {
         }
         lastCoalescedName = coalescing ? name : nil
 
-        undoManager.registerUndo(withTarget: self) { document in
-            let redo = document.composition.annotations
-            document.composition.annotations = before
-            document.undoManager.registerUndo(withTarget: document) { document in
-                document.composition.annotations = redo
-            }
-        }
+        registerRestore(to: before)
         undoManager.setActionName(name)
+    }
+
+    /// Registers an undo that restores `snapshot` — and, when it runs, registers
+    /// the same thing again for whatever it replaced.
+    ///
+    /// The re-entrance is the important part. Registering a *separate* redo
+    /// closure that itself registers nothing leaves the stack one level short:
+    /// undo, redo, and then the next undo skips the change entirely and eats the
+    /// one before it, with the stack and the document disagreeing from then on.
+    private func registerRestore(to snapshot: [Annotation]) {
+        undoManager.registerUndo(withTarget: self) { document in
+            let current = document.composition.annotations
+            document.composition.annotations = document.preservingText(of: current, in: snapshot)
+            document.registerRestore(to: current)
+        }
+    }
+
+    /// Structural undo shouldn't throw away typing.
+    ///
+    /// Descriptions aren't registered with the undo manager (the text field has
+    /// its own), so a snapshot taken before a mark was moved also contains the
+    /// text as it was then. Restoring it verbatim would silently revert a
+    /// sentence written since — which reads as the app eating your work. Marks
+    /// that still exist keep whatever is currently typed against them.
+    private func preservingText(of current: [Annotation], in snapshot: [Annotation]) -> [Annotation] {
+        let texts = Dictionary(uniqueKeysWithValues: current.map { ($0.id, $0.text) })
+        return snapshot.map { annotation in
+            var restored = annotation
+            if let text = texts[annotation.id] { restored.text = text }
+            return restored
+        }
     }
 
     @ObservationIgnored private var lastCoalescedName: String?

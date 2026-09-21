@@ -9,7 +9,9 @@ import ScreenCaptureKit
 /// to do. Positions are therefore kept in AppKit *global* coordinates and each
 /// view converts to its own space when drawing.
 final class SelectionSession {
-    let mode: CaptureMode
+    /// Not a `let`: Space switches between dragging a region and picking a
+    /// window without starting the capture over, the way ⌘⇧4 does.
+    private(set) var mode: CaptureMode
     private(set) var windows: [HitTestableWindow] = []
 
     /// Where the drag started and where the pointer is now, both global. Nil
@@ -20,6 +22,9 @@ final class SelectionSession {
 
     private var views: [SelectionOverlayView] = []
     private var finish: ((SelectionOutcome) -> Void)?
+    /// Kept so window mode can be entered later, from Space.
+    private let content: SCShareableContent
+    private let initialMode: CaptureMode
 
     struct HitTestableWindow {
         let id: CGWindowID
@@ -40,10 +45,39 @@ final class SelectionSession {
         finish: @escaping (SelectionOutcome) -> Void
     ) {
         self.mode = mode
+        self.initialMode = mode
+        self.content = content
         self.displayImages = displayImages
         self.finish = finish
         if mode == .window {
             windows = Self.hitTestableWindows(from: content)
+        }
+    }
+
+    /// Space toggles between dragging a region and clicking a window — the
+    /// gesture people already know from the system screenshot tool. Only
+    /// meaningful for the two modes that involve choosing something; taking a
+    /// whole screen has nothing to toggle.
+    func toggleWindowMode() {
+        guard initialMode != .screen else { return }
+
+        if mode == .window {
+            mode = initialMode == .window ? .region : initialMode
+        } else {
+            if windows.isEmpty {
+                windows = Self.hitTestableWindows(from: content)
+            }
+            mode = .window
+        }
+
+        // A half-finished drag makes no sense in the other mode.
+        anchor = nil
+        if mode == .window {
+            hovered = pointer.flatMap(topmostWindow(under:))
+        }
+        redraw()
+        for view in views {
+            view.window?.invalidateCursorRects(for: view)
         }
     }
 

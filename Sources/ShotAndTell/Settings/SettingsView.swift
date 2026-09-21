@@ -88,7 +88,7 @@ struct SettingsView: View {
         panel.canChooseFiles = false
         panel.allowsMultipleSelection = false
         panel.prompt = "Choose"
-        panel.message = "Where should Shot and tell save screenshots?"
+        panel.message = "Where should Shot and Tell save screenshots?"
 
         guard panel.runModal() == .OK, let url = panel.url else { return }
         settings.setSaveFolder(url)

@@ -81,14 +81,14 @@ targets:
     info:
       path: Sources/ShotAndTell/Info.plist
       properties:
-        # FALSE, deliberately, and this is load-bearing: Shot and tell has a Dock
+        # FALSE, deliberately, and this is load-bearing: Shot and Tell has a Dock
         # icon *and* a menu bar item. Clicking the Dock icon is one of the three
         # ways to start a capture (see AppDelegate.applicationShouldHandleReopen),
         # which an LSUIElement accessory app could never offer.
         LSUIElement: false
         LSMinimumSystemVersion: "26.0"
         CFBundleName: ShotAndTell
-        CFBundleDisplayName: Shot and tell
+        CFBundleDisplayName: Shot and Tell
         # There is no MainMenu.xib — `@main` lives on AppDelegate and the menu
         # bar is built in code (see MainMenu.swift). NSApplication is the default
         # principal class when this key is absent, but being explicit saves the
@@ -119,11 +119,11 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: net.robgough.ShotAndTell
-        # "Shot and tell.app" in Finder, Launchpad and the App Store — the name
+        # "Shot and Tell.app" in Finder, Launchpad and the App Store — the name
         # people actually see. PRODUCT_MODULE_NAME keeps the Swift module a
         # valid identifier. Set now rather than later because changing it moves
         # the ~/Applications path and the archive name.
-        PRODUCT_NAME: "Shot and tell"
+        PRODUCT_NAME: "Shot and Tell"
         PRODUCT_MODULE_NAME: ShotAndTell
         ARCHS: arm64
         MARKETING_VERSION: "0.1.0"

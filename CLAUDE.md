@@ -4,7 +4,7 @@ Guidance for Claude Code (claude.ai/code) working in this repository.
 
 ## What this is
 
-Shot and tell is a macOS screenshot tool for talking to AI about pictures. You
+Shot and Tell is a macOS screenshot tool for talking to AI about pictures. You
 capture a region, window or screen; you point at things with numbered markers and
 describe them; you censor what shouldn't be seen. The export is a single image —
 the capture on a background with a numbered legend beside it — plus the same
@@ -41,8 +41,8 @@ DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild \
   -derivedDataPath .derivedData build
 ```
 
-A post-build phase installs a copy to `~/Applications/Shot and tell.app`, purely
-as a stable thing to launch. The bundle is `Shot and tell.app` (`PRODUCT_NAME`)
+A post-build phase installs a copy to `~/Applications/Shot and Tell.app`, purely
+as a stable thing to launch. The bundle is `Shot and Tell.app` (`PRODUCT_NAME`)
 while the Swift module is `ShotAndTell` (`PRODUCT_MODULE_NAME`).
 
 There is no test target yet and no lint config.

@@ -27,6 +27,19 @@ final class CompositionCanvasView: NSView {
     private var movingID: UUID?
     private var lastMovePoint: CGPoint?
 
+    /// Which handle of the selected mark is being dragged, and the normalised
+    /// point that stays put while it moves — the opposite corner of a box, or
+    /// the other end of an arrow.
+    private var resizing: (id: UUID, handle: Handle, anchor: CGPoint)?
+
+    enum Handle: CaseIterable {
+        case bottomLeft, bottomRight, topLeft, topRight
+        /// Arrows resize by their ends rather than by a bounding box.
+        case arrowTail, arrowHead
+    }
+
+    private static let handleSize: CGFloat = 8
+
     override var isFlipped: Bool { false }
     override var acceptsFirstResponder: Bool { true }
 
@@ -42,7 +55,9 @@ final class CompositionCanvasView: NSView {
         let composition = document.composition
 
         let palette = Palette.resolve(background: composition.background, appearance: composition.appearance)
-        let layout = CompositionLayout.solve(composition, palette: palette)
+        // No legend on the canvas: the panel to the right is the legend, and
+        // showing it twice just makes the screenshot smaller.
+        let layout = CompositionLayout.solve(composition, palette: palette, includeLegend: false)
         let fit = Self.fit(layout.canvasSize, in: bounds.insetBy(dx: 12, dy: 12))
         let scaleChanged = abs(fit.width - fitRect.width) > 0.5
 
@@ -58,7 +73,7 @@ final class CompositionCanvasView: NSView {
         let backing = window?.backingScaleFactor ?? 2
         let renderScale = max(0.5, min(backing, fitScale * backing))
 
-        cachedImage = try? Compositor.render(composition, scale: renderScale).image
+        cachedImage = try? Compositor.render(composition, scale: renderScale, includeLegend: false).image
         cacheIsStale = false
     }
 
@@ -98,6 +113,55 @@ final class CompositionCanvasView: NSView {
         context.setLineDash(phase: 0, lengths: [4, 3])
         context.stroke(viewRect(rect).insetBy(dx: -4, dy: -4))
         context.setLineDash(phase: 0, lengths: [])
+
+        for (_, point) in handles(for: annotation, layout: layout) {
+            let box = CGRect(
+                x: point.x - Self.handleSize / 2,
+                y: point.y - Self.handleSize / 2,
+                width: Self.handleSize,
+                height: Self.handleSize
+            )
+            context.setFillColor(NSColor.white.cgColor)
+            context.fill(box)
+            context.setStrokeColor(NSColor.controlAccentColor.cgColor)
+            context.setLineWidth(1)
+            context.stroke(box)
+        }
+    }
+
+    /// Handle positions in view coordinates. Pins have none — they're a point,
+    /// and there's nothing to resize.
+    private func handles(for annotation: Annotation, layout: CompositionLayout) -> [(Handle, CGPoint)] {
+        switch annotation.kind {
+        case .pin:
+            return []
+        case let .arrow(from, to):
+            return [
+                (.arrowTail, viewPoint(Compositor.denormalise(from, in: layout.captureRect))),
+                (.arrowHead, viewPoint(Compositor.denormalise(to, in: layout.captureRect))),
+            ]
+        case .box, .redaction:
+            let rect = viewRect(canvasRect(for: annotation, layout: layout))
+            return [
+                (.bottomLeft, CGPoint(x: rect.minX, y: rect.minY)),
+                (.bottomRight, CGPoint(x: rect.maxX, y: rect.minY)),
+                (.topLeft, CGPoint(x: rect.minX, y: rect.maxY)),
+                (.topRight, CGPoint(x: rect.maxX, y: rect.maxY)),
+            ]
+        }
+    }
+
+    /// The normalised point that must stay still while `handle` is dragged.
+    private func anchor(for handle: Handle, of annotation: Annotation) -> CGPoint {
+        switch (handle, annotation.kind) {
+        case let (.arrowTail, .arrow(_, to)): to
+        case let (.arrowHead, .arrow(from, _)): from
+        case let (.bottomLeft, .box(rect)), let (.bottomLeft, .redaction(rect)): CGPoint(x: rect.maxX, y: rect.minY)
+        case let (.bottomRight, .box(rect)), let (.bottomRight, .redaction(rect)): CGPoint(x: rect.minX, y: rect.minY)
+        case let (.topLeft, .box(rect)), let (.topLeft, .redaction(rect)): CGPoint(x: rect.maxX, y: rect.maxY)
+        case let (.topRight, .box(rect)), let (.topRight, .redaction(rect)): CGPoint(x: rect.minX, y: rect.maxY)
+        default: .zero
+        }
     }
 
     private func drawDragPreview(in context: CGContext) {
@@ -130,6 +194,10 @@ final class CompositionCanvasView: NSView {
     private func canvasPoint(_ viewPoint: CGPoint) -> CGPoint {
         guard fitScale > 0 else { return .zero }
         return CGPoint(x: (viewPoint.x - fitRect.minX) / fitScale, y: (viewPoint.y - fitRect.minY) / fitScale)
+    }
+
+    private func viewPoint(_ canvasPoint: CGPoint) -> CGPoint {
+        CGPoint(x: fitRect.minX + canvasPoint.x * fitScale, y: fitRect.minY + canvasPoint.y * fitScale)
     }
 
     private func viewRect(_ canvasRect: CGRect) -> CGRect {
@@ -176,10 +244,24 @@ final class CompositionCanvasView: NSView {
     override func mouseDown(with event: NSEvent) {
         guard let document else { return }
         let point = convert(event.locationInWindow, from: nil)
-        window?.makeFirstResponder(self)
 
         switch document.tool {
         case .select:
+            window?.makeFirstResponder(self)
+
+            // A handle of the current selection wins over hitting whatever is
+            // underneath it — the handles sit on the mark's own edge, so any
+            // other order makes them impossible to grab.
+            if let id = document.selection,
+               let layout = cachedLayout,
+               let annotation = document.composition.annotations.first(where: { $0.id == id }),
+               let grabbed = handles(for: annotation, layout: layout).first(where: {
+                   abs($0.1.x - point.x) <= Self.handleSize && abs($0.1.y - point.y) <= Self.handleSize
+               }) {
+                resizing = (id, grabbed.0, anchor(for: grabbed.0, of: annotation))
+                return
+            }
+
             let hit = topmostAnnotation(at: point)
             document.selection = hit?.id
             movingID = hit?.id
@@ -200,6 +282,31 @@ final class CompositionCanvasView: NSView {
     override func mouseDragged(with event: NSEvent) {
         guard let document else { return }
         let point = convert(event.locationInWindow, from: nil)
+
+        if let resizing, let layout = cachedLayout {
+            let moved = Compositor.normalise(canvasPoint(point), in: layout.captureRect).clampedToUnitSquare()
+            let kind: Annotation.Kind
+            switch resizing.handle {
+            case .arrowTail:
+                kind = .arrow(from: moved, to: resizing.anchor)
+            case .arrowHead:
+                kind = .arrow(from: resizing.anchor, to: moved)
+            default:
+                let rect = CGRect(
+                    x: min(moved.x, resizing.anchor.x),
+                    y: min(moved.y, resizing.anchor.y),
+                    width: abs(moved.x - resizing.anchor.x),
+                    height: abs(moved.y - resizing.anchor.y)
+                )
+                let isRedaction = document.composition.annotations
+                    .first { $0.id == resizing.id }
+                    .map { !$0.isNumbered } ?? false
+                kind = isRedaction ? .redaction(rect) : .box(rect)
+            }
+            document.setKind(kind, for: resizing.id)
+            invalidate()
+            return
+        }
 
         if let movingID, let last = lastMovePoint, let layout = cachedLayout {
             let delta = CGVector(
@@ -224,13 +331,19 @@ final class CompositionCanvasView: NSView {
             dragCurrent = nil
             movingID = nil
             lastMovePoint = nil
+            resizing = nil
             document.endCoalescing()
         }
 
         guard document.tool.isDragged, let start = dragStart else { return }
         let end = convert(event.locationInWindow, from: nil)
 
-        guard let from = normalised(start), let to = normalised(end) else { return }
+        // The start has to be on the capture, but the end is clamped rather than
+        // rejected: dragging a redaction off the edge to cover something at the
+        // edge is the natural gesture, and silently producing nothing is the
+        // worst possible response to it.
+        guard let from = normalised(start), let layoutForEnd = cachedLayout else { return }
+        let to = Compositor.normalise(canvasPoint(end), in: layoutForEnd.captureRect).clampedToUnitSquare()
 
         switch document.tool {
         case .arrow:
@@ -270,12 +383,28 @@ final class CompositionCanvasView: NSView {
 
     override func keyDown(with event: NSEvent) {
         guard let document else { return super.keyDown(with: event) }
+
         // 51 is Delete, 117 is Forward Delete.
         if event.keyCode == 51 || event.keyCode == 117, let selection = document.selection {
             document.remove(selection)
             invalidate()
             return
         }
+
+        // Single keys switch tools, so the flow is P, click, type, Escape, A,
+        // drag… without going back to the toolbar. Only when the canvas has
+        // focus — while a description field has it, these keys type instead.
+        let modifiers = event.modifierFlags.intersection([.command, .control, .option])
+        if modifiers.isEmpty,
+           let key = event.charactersIgnoringModifiers?.lowercased().first,
+           let tool = EditorTool.named(by: key) {
+            document.tool = tool
+            document.selection = nil
+            window?.invalidateCursorRects(for: self)
+            invalidate()
+            return
+        }
+
         super.keyDown(with: event)
     }
 }
@@ -287,6 +416,8 @@ struct CompositionCanvas: NSViewRepresentable {
     /// Bumped by the parent whenever the composition changes, so the canvas
     /// knows to re-render. SwiftUI can't see inside the AppKit view.
     let revision: Int
+    /// Bumped when the canvas should take keyboard focus back from the legend.
+    let focusRequests: Int
 
     func makeNSView(context: Context) -> CompositionCanvasView {
         let view = CompositionCanvasView()
@@ -297,6 +428,22 @@ struct CompositionCanvas: NSViewRepresentable {
     func updateNSView(_ view: CompositionCanvasView, context: Context) {
         view.document = document
         view.window?.invalidateCursorRects(for: view)
+        if focusRequests != context.coordinator.lastFocusRequest {
+            context.coordinator.lastFocusRequest = focusRequests
+            // Next cycle, not this one. Relinquishing SwiftUI's `@FocusState`
+            // settles asynchronously, and asking for first responder in the same
+            // pass gets quietly overridden when it does.
+            DispatchQueue.main.async { [weak view] in
+                guard let view else { return }
+                view.window?.makeFirstResponder(view)
+            }
+        }
         view.invalidate()
+    }
+
+    func makeCoordinator() -> Coordinator { Coordinator() }
+
+    final class Coordinator {
+        var lastFocusRequest = 0
     }
 }

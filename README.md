@@ -1,4 +1,4 @@
-# Shot and tell
+# Shot and Tell
 
 A macOS screenshot tool for talking to AI about pictures.
 
@@ -21,7 +21,7 @@ macOS 26+. Mac App Store. Free.
    blocks for anything that shouldn't be seen. Type a description against each
    number as you go.
 4. Done. The composed image goes on the clipboard with the legend as text beside
-   it, and a PNG is saved to Pictures › Shot and tell.
+   it, and a PNG is saved to Pictures › Shot and Tell.
 
 Nothing leaves your Mac. The app has no network entitlement, so it can't send
 anything anywhere.

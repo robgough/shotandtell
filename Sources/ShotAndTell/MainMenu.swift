@@ -26,20 +26,20 @@ enum MainMenu {
         let item = NSMenuItem()
         let menu = NSMenu()
 
-        menu.addItem(withTitle: "About Shot and tell", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
+        menu.addItem(withTitle: "About Shot and Tell", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
         menu.addItem(.separator())
 
         menu.addItem(withTitle: "Settings…", action: #selector(AppDelegate.openSettings), keyEquivalent: ",")
 
         menu.addItem(.separator())
-        menu.addItem(withTitle: "Hide Shot and tell", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
+        menu.addItem(withTitle: "Hide Shot and Tell", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
 
         let hideOthers = menu.addItem(withTitle: "Hide Others", action: #selector(NSApplication.hideOtherApplications(_:)), keyEquivalent: "h")
         hideOthers.keyEquivalentModifierMask = [.command, .option]
 
         menu.addItem(withTitle: "Show All", action: #selector(NSApplication.unhideAllApplications(_:)), keyEquivalent: "")
         menu.addItem(.separator())
-        menu.addItem(withTitle: "Quit Shot and tell", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        menu.addItem(withTitle: "Quit Shot and Tell", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
 
         item.submenu = menu
         return item

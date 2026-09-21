@@ -50,11 +50,15 @@ final class Settings {
     var dockClickMode: CaptureMode { didSet { save() } }
 
     /// A security-scoped bookmark to a folder the user picked. Nil means the
-    /// default, `~/Pictures/Shot and tell`, which the pictures entitlement
+    /// default, `~/Pictures/Shot and Tell`, which the pictures entitlement
     /// covers without any bookmark at all.
     private(set) var saveFolderBookmark: Data?
 
     @ObservationIgnored var onHotkeyError: ((Error) -> Void)?
+    /// The last registration failure, kept so it can be shown even when it
+    /// happened at launch — long before the Settings window existed to be told
+    /// about it. The menu bar reads this.
+    private(set) var hotkeyProblem: String?
 
     private let defaults = UserDefaults.standard
 
@@ -92,11 +96,13 @@ final class Settings {
     func applyHotkey() {
         save()
         GlobalHotkey.shared.unregister()
+        hotkeyProblem = nil
         guard let hotkey, hotkey.isUsable else { return }
         do {
             try GlobalHotkey.shared.register(keyCode: hotkey.keyCode, modifiers: hotkey.modifiers)
         } catch {
             Log.app.error("Hotkey registration failed: \(error.localizedDescription, privacy: .public)")
+            hotkeyProblem = error.localizedDescription
             onHotkeyError?(error)
         }
     }
@@ -139,7 +145,7 @@ final class Settings {
     }
 
     var saveFolderDisplayName: String {
-        guard let resolved = resolveSaveFolder() else { return "Pictures › Shot and tell" }
+        guard let resolved = resolveSaveFolder() else { return "Pictures › Shot and Tell" }
         defer { resolved.stopAccessing() }
         return resolved.url.path(percentEncoded: false)
     }

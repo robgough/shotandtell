@@ -41,11 +41,29 @@ final class SelectionOverlayView: NSView {
     // MARK: - Drawing
 
     override func draw(_ dirtyRect: NSRect) {
+        drawFrozenScreen()
+
         switch session.mode {
         case .region: drawRegion()
         case .window: drawHighlight(session.hovered.map { local($0.cocoaFrame) }, label: session.hovered?.title)
         case .screen: drawScreenPick()
         }
+    }
+
+    /// Paints the screenshot taken just before the overlay appeared, so what's
+    /// on screen stops moving while a selection is being made.
+    ///
+    /// Without this the overlay is transparent and the real screen carries on
+    /// updating underneath it — while the magnifier, which can only show the
+    /// snapshot, drifts out of date against it. Freezing makes the two agree by
+    /// construction, and stops a video or a scrolling log moving out from under
+    /// the selection being dragged around it.
+    private func drawFrozenScreen() {
+        guard let displayImage, let context = NSGraphicsContext.current?.cgContext else { return }
+        context.saveGState()
+        context.interpolationQuality = .none
+        context.draw(displayImage.image, in: bounds)
+        context.restoreGState()
     }
 
     /// Dims everything except `hole`, in one fill. Punching a hole with an
@@ -136,6 +154,13 @@ final class SelectionOverlayView: NSView {
         let ring = NSBezierPath(ovalIn: circle)
         ring.lineWidth = 2
         ring.stroke()
+
+        // Which point it's magnifying, spelled out. The loupe sits beside the
+        // pointer rather than under it, so without this it isn't obvious that
+        // it shows the crosshair rather than what's behind the circle.
+        let global = CGPoint(x: point.x + screenOrigin.x, y: point.y + screenOrigin.y)
+        let cg = ScreenGeometry.cgGlobal(fromCocoa: global)
+        drawReadout("\(Int(cg.x)), \(Int(cg.y))", near: circle)
     }
 
     /// Up and to the right of the pointer, flipping whenever that would put the
@@ -251,8 +276,14 @@ final class SelectionOverlayView: NSView {
     }
 
     override func keyDown(with event: NSEvent) {
-        // 53 is Escape. Anything else is ignored rather than beeping.
-        if event.keyCode == 53 { session.cancel() }
+        switch event.keyCode {
+        case 53: // Escape
+            session.cancel()
+        case 49: // Space — the same toggle the system screenshot tool uses.
+            session.toggleWindowMode()
+        default:
+            break // Ignored rather than beeping.
+        }
     }
 
     override func cancelOperation(_ sender: Any?) {

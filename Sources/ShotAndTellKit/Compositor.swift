@@ -23,9 +23,9 @@ nonisolated enum Compositor {
     }
 
     /// `scale` is pixels per point: 1 for a quick preview, 2 for export.
-    static func render(_ composition: Composition, scale: CGFloat) throws -> Output {
+    static func render(_ composition: Composition, scale: CGFloat, includeLegend: Bool = true) throws -> Output {
         let palette = Palette.resolve(background: composition.background, appearance: composition.appearance)
-        let layout = CompositionLayout.solve(composition, palette: palette)
+        let layout = CompositionLayout.solve(composition, palette: palette, includeLegend: includeLegend)
 
         let pixelWidth = Int((layout.canvasSize.width * scale).rounded())
         let pixelHeight = Int((layout.canvasSize.height * scale).rounded())
@@ -45,11 +45,16 @@ nonisolated enum Compositor {
         }
 
         context.scaleBy(x: scale, y: scale)
+        // The bitmap is a whole number of pixels but the canvas is fractional
+        // once the export cap kicks in, so drawing exactly `canvasSize` can
+        // leave the last row half-covered and semi-transparent. Everything is
+        // drawn against this slightly larger rect instead.
+        let drawnSize = CGSize(width: CGFloat(pixelWidth) / scale, height: CGFloat(pixelHeight) / scale)
         context.setAllowsAntialiasing(true)
         context.setShouldAntialias(true)
         context.interpolationQuality = .high
 
-        drawCanvas(composition, layout: layout, palette: palette, in: context)
+        drawCanvas(layout: layout, palette: palette, size: drawnSize, in: context)
         drawCapture(composition, layout: layout, palette: palette, in: context)
         drawAnnotations(composition, layout: layout, palette: palette, in: context)
         drawLegend(composition, layout: layout, palette: palette, in: context)
@@ -60,8 +65,8 @@ nonisolated enum Compositor {
 
     // MARK: - Canvas
 
-    private static func drawCanvas(_ composition: Composition, layout: CompositionLayout, palette: Palette, in context: CGContext) {
-        let bounds = CGRect(origin: .zero, size: layout.canvasSize)
+    private static func drawCanvas(layout: CompositionLayout, palette: Palette, size: CGSize, in context: CGContext) {
+        let bounds = CGRect(origin: .zero, size: size)
 
         guard palette.canvasIsGradient else {
             context.setFillColor(palette.canvasTop)
@@ -147,8 +152,12 @@ nonisolated enum Compositor {
             guard case let .redaction(normalised) = redaction.kind else { continue }
             let rect = denormalise(normalised, in: capture)
             context.setFillColor(palette.redaction)
-            context.addPath(CGPath(roundedRect: rect, cornerWidth: 3, cornerHeight: 3, transform: nil))
-            context.fillPath()
+            // Square corners, and half a point of overdraw. A rounded corner
+            // leaves a few of the original pixels showing in the notch, and the
+            // antialiased boundary row blends with what's underneath — a small
+            // nibble, but the entire point of an opaque fill is that nothing
+            // under it survives. Cosmetics lose this argument.
+            context.fill(rect.insetBy(dx: -0.5, dy: -0.5))
         }
 
         for (number, annotation) in composition.numbered {
@@ -257,7 +266,8 @@ nonisolated enum Compositor {
     // MARK: - Legend
 
     private static func drawLegend(_ composition: Composition, layout: CompositionLayout, palette: Palette, in context: CGContext) {
-        guard !composition.legendIsEmpty else { return }
+        // An empty legendRect means the layout left the column out entirely.
+        guard !composition.legendIsEmpty, layout.legendRect.width > 0 else { return }
 
         if !composition.title.isEmpty {
             TextBlock(composition.title, font: CompositionLayout.titleFont(), colour: palette.ink)

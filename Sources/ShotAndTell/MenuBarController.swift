@@ -4,11 +4,14 @@ import AppKit
 ///
 /// No key equivalents on the capture items: the shortcut that matters is the
 /// *global* hotkey (phase 5), which works whatever app is frontmost. A menu key
-/// equivalent would only fire when Shot and tell already had focus, which is
+/// equivalent would only fire when Shot and Tell already had focus, which is
 /// almost never the moment you want to take a screenshot.
 final class MenuBarController: NSObject, NSMenuDelegate {
     private let statusItem: NSStatusItem
     private let coordinator: CaptureCoordinator
+    /// The most recent export, so it can be revealed. Not persisted — a stale
+    /// path from three days ago is a worse menu item than none.
+    var lastSavedURL: URL?
 
     init(coordinator: CaptureCoordinator) {
         self.coordinator = coordinator
@@ -18,7 +21,7 @@ final class MenuBarController: NSObject, NSMenuDelegate {
         if let button = statusItem.button {
             button.image = NSImage(
                 systemSymbolName: "viewfinder",
-                accessibilityDescription: "Shot and tell"
+                accessibilityDescription: "Shot and Tell"
             )
             button.image?.isTemplate = true
         }
@@ -81,14 +84,32 @@ final class MenuBarController: NSObject, NSMenuDelegate {
         let timedItem = menu.addItem(withTitle: "Timed Capture", action: nil, keyEquivalent: "")
         timedItem.submenu = timed
 
+        if let lastSavedURL {
+            menu.addItem(.separator())
+            let reveal = menu.addItem(withTitle: "Reveal Last Screenshot in Finder", action: #selector(revealLastSaved), keyEquivalent: "")
+            reveal.target = self
+            reveal.toolTip = lastSavedURL.path(percentEncoded: false)
+        }
+
+        if let problem = Settings.shared.hotkeyProblem {
+            menu.addItem(.separator())
+            // The failure that matters most happens at launch, before any
+            // window exists to report it to — most likely the default shortcut
+            // already being taken by something else.
+            let warning = menu.addItem(withTitle: "Shortcut unavailable", action: #selector(AppDelegate.openSettings), keyEquivalent: "")
+            warning.target = NSApp.delegate
+            warning.toolTip = problem
+            warning.image = NSImage(systemSymbolName: "exclamationmark.triangle", accessibilityDescription: nil)
+        }
+
         menu.addItem(.separator())
 
         let settings = menu.addItem(withTitle: "Settings…", action: #selector(AppDelegate.openSettings), keyEquivalent: ",")
         settings.target = NSApp.delegate
 
-        menu.addItem(withTitle: "About Shot and tell", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
+        menu.addItem(withTitle: "About Shot and Tell", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
         menu.addItem(.separator())
-        menu.addItem(withTitle: "Quit Shot and tell", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        menu.addItem(withTitle: "Quit Shot and Tell", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
     }
 
     @objc private func newCapture() {
@@ -98,6 +119,11 @@ final class MenuBarController: NSObject, NSMenuDelegate {
     @objc private func captureMode(_ sender: NSMenuItem) {
         guard let raw = sender.representedObject as? String, let mode = CaptureMode(rawValue: raw) else { return }
         coordinator.beginCapture(CaptureRequest(mode: mode))
+    }
+
+    @objc private func revealLastSaved() {
+        guard let lastSavedURL else { return }
+        NSWorkspace.shared.activateFileViewerSelecting([lastSavedURL])
     }
 
     @objc private func timedCapture(_ sender: NSMenuItem) {

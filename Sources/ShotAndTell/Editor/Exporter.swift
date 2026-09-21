@@ -75,7 +75,12 @@ enum Exporter {
         case .retinaCapped:
             let longestEdge = max(canvasSize.width, canvasSize.height)
             guard longestEdge > 0 else { return 2 }
-            return min(2, maximumPixelEdge / longestEdge)
+            // Never below 1x. The cap is on the whole canvas, and a long legend
+            // makes the canvas tall — fifty entries could push the scale under
+            // 0.7 and shrink the *screenshot* to well below the resolution it
+            // was captured at, silently. A tall legend should make a tall file,
+            // not an unreadable one.
+            return max(1, min(2, maximumPixelEdge / longestEdge))
         }
     }
 
@@ -95,7 +100,7 @@ enum Exporter {
             throw Failure.noPicturesFolder
         }
 
-        let folder = pictures.appending(path: "Shot and tell", directoryHint: .isDirectory)
+        let folder = pictures.appending(path: "Shot and Tell", directoryHint: .isDirectory)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
 
         let url = folder.appending(path: filename(title: title))
@@ -111,12 +116,15 @@ enum Exporter {
         formatter.dateFormat = "yyyy-MM-dd 'at' HH.mm.ss"
         let stamp = formatter.string(from: Date())
 
-        let cleaned = title
+        var cleaned = title
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .replacingOccurrences(of: "/", with: "-")
             .replacingOccurrences(of: ":", with: "-")
             .prefix(60)
+        // A title starting with a dot would make an invisible file, which looks
+        // exactly like the save having failed.
+        while cleaned.hasPrefix(".") { cleaned = cleaned.dropFirst() }
 
-        return cleaned.isEmpty ? "Shot and tell \(stamp).png" : "\(cleaned) \(stamp).png"
+        return cleaned.isEmpty ? "Shot and Tell \(stamp).png" : "\(cleaned) \(stamp).png"
     }
 }

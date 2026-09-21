@@ -62,17 +62,22 @@ nonisolated struct Annotation: Identifiable, Equatable, Codable, Sendable {
         }
     }
 
-    /// Moves the whole annotation by a normalised delta.
+    /// Moves the whole annotation by a normalised delta, keeping it on the
+    /// capture. Dragged off the edge it would be clipped out of the image while
+    /// keeping its number in the legend, which is worse than not moving.
     mutating func move(by delta: CGVector) {
         switch kind {
         case let .pin(point):
-            kind = .pin(at: point.offset(by: delta))
+            kind = .pin(at: point.offset(by: delta).clampedToUnitSquare())
         case let .arrow(from, to):
-            kind = .arrow(from: from.offset(by: delta), to: to.offset(by: delta))
+            kind = .arrow(
+                from: from.offset(by: delta).clampedToUnitSquare(),
+                to: to.offset(by: delta).clampedToUnitSquare()
+            )
         case let .box(rect):
-            kind = .box(rect.offsetBy(dx: delta.dx, dy: delta.dy))
+            kind = .box(rect.offsetBy(dx: delta.dx, dy: delta.dy).clampedToUnitSquare())
         case let .redaction(rect):
-            kind = .redaction(rect.offsetBy(dx: delta.dx, dy: delta.dy))
+            kind = .redaction(rect.offsetBy(dx: delta.dx, dy: delta.dy).clampedToUnitSquare())
         }
     }
 }
@@ -89,5 +94,20 @@ nonisolated extension CGPoint {
     /// edge would put its number somewhere the legend can't explain.
     func clampedToUnitSquare() -> CGPoint {
         CGPoint(x: min(max(x, 0), 1), y: min(max(y, 0), 1))
+    }
+}
+
+nonisolated extension CGRect {
+    /// Slides a normalised rectangle back inside the capture without resizing
+    /// it — a box dragged past the edge should stop, not shrink.
+    func clampedToUnitSquare() -> CGRect {
+        let width = min(self.width, 1)
+        let height = min(self.height, 1)
+        return CGRect(
+            x: min(max(minX, 0), 1 - width),
+            y: min(max(minY, 0), 1 - height),
+            width: width,
+            height: height
+        )
     }
 }

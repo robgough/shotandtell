@@ -31,7 +31,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         Settings.shared.applyHotkey()
 
-        Log.app.notice("Shot and tell launched")
+        Log.app.notice("Shot and Tell launched")
     }
 
     /// Clicking the Dock icon starts a capture. This is the whole reason the app
@@ -54,9 +54,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// More than one can be open at once — taking a second screenshot while
     /// still describing the first is a reasonable thing to do.
     private func openEditor(for capture: CapturedImage) {
-        let controller = EditorWindowController(capture: capture) { [weak self] controller in
-            self?.editors.removeAll { $0 === controller }
-        }
+        let controller = EditorWindowController(
+            capture: capture,
+            onExported: { [weak self] url in
+                self?.menuBar?.lastSavedURL = url
+            },
+            onClose: { [weak self] controller in
+                self?.editors.removeAll { $0 === controller }
+            }
+        )
         editors.append(controller)
         controller.show()
     }

@@ -18,7 +18,11 @@ struct EditorView: View {
             toolbar
             Divider()
             HStack(spacing: 0) {
-                CompositionCanvas(document: document, revision: document.revision)
+                CompositionCanvas(
+                    document: document,
+                    revision: document.revision,
+                    focusRequests: document.canvasFocusRequests
+                )
                     .frame(minWidth: 420, minHeight: 320)
                 Divider()
                 legend
@@ -28,8 +32,13 @@ struct EditorView: View {
         .frame(minWidth: 780, minHeight: 460)
         .onChange(of: document.pendingFocus) { _, id in
             guard let id else { return }
-            focusedEntry = id
-            document.pendingFocus = nil
+            // A cycle later, so the row exists before focus is asked for.
+            // Setting it in the same update as the row's creation silently does
+            // nothing, which is what made you click into the field by hand.
+            DispatchQueue.main.async {
+                focusedEntry = id
+                document.pendingFocus = nil
+            }
         }
     }
 
@@ -49,6 +58,18 @@ struct EditorView: View {
             Spacer()
 
             backgroundMenu
+
+            Button {
+                let markdown = MarkdownLegend.render(document.composition)
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(markdown, forType: .string)
+            } label: {
+                Label("Copy Legend", systemImage: "text.badge.checkmark")
+            }
+            .labelStyle(.iconOnly)
+            .keyboardShortcut("c", modifiers: [.command, .shift])
+            .help("Copy the legend as text (⇧⌘C)")
+            .disabled(document.composition.numbered.isEmpty)
 
             Button("Cancel", action: onCancel)
                 .keyboardShortcut(.cancelAction)
@@ -93,9 +114,17 @@ struct EditorView: View {
     private var legend: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
-                TextField("Title", text: $document.composition.title, prompt: Text("Title"))
-                    .textFieldStyle(.plain)
-                    .font(.title3.weight(.semibold))
+                HStack(spacing: 8) {
+                    TextField("Title", text: $document.composition.title, prompt: Text("Title"))
+                        .textFieldStyle(.plain)
+                        .font(.title3.weight(.semibold))
+
+                    if document.isSuggestingTitle {
+                        ProgressView()
+                            .controlSize(.small)
+                            .help("Suggesting a title on-device")
+                    }
+                }
 
                 Divider()
 
@@ -120,7 +149,13 @@ struct EditorView: View {
     }
 
     private var emptyHint: String {
-        "Pick a tool and click the screenshot. Each mark gets a number, and whatever you type here becomes its entry in the legend."
+        """
+        Pick a tool and click the screenshot. Each mark gets a number, and \
+        whatever you type here becomes its entry in the legend.
+
+        P, A, B and R pick a tool while the screenshot has focus; Escape in a \
+        description sends focus back to it.
+        """
     }
 
     private func entryRow(number: Int, annotation: Annotation) -> some View {
@@ -135,6 +170,14 @@ struct EditorView: View {
                 .textFieldStyle(.plain)
                 .lineLimit(1...6)
                 .focused($focusedEntry, equals: annotation.id)
+                // Escape hands focus back to the canvas, where the single-key
+                // tool shortcuts live. Without somewhere to go, the only way out
+                // of a description is the mouse.
+                .onKeyPress(.escape) {
+                    focusedEntry = nil
+                    document.focusCanvas()
+                    return .handled
+                }
 
             Button {
                 document.remove(annotation.id)

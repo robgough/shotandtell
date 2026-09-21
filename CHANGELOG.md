@@ -1,6 +1,6 @@
 # Changelog
 
-User-visible changes to Shot and tell, newest first.
+User-visible changes to Shot and Tell, newest first.
 
 Entries are written in user language, not commit language: "Captures now keep the
 window's rounded corners" rather than "Add corner-radius mask to WindowCapture".
@@ -12,8 +12,10 @@ don't.
 
 - Take a screenshot by dragging out a region, clicking a window, or picking a
   whole screen, with an optional 3, 5 or 10 second timer.
-- A magnifier follows the pointer while you drag out a region, so you can land
-  on an exact edge.
+- The screen freezes while you choose what to capture, and a magnifier follows
+  the pointer showing the exact pixel under the crosshair with its coordinates.
+- Press Space while choosing to switch between dragging a region and clicking a
+  window, the same way the system screenshot tool works.
 - A global keyboard shortcut starts a capture from any app — ⌃⇧S to begin with,
   changeable in Settings.
 - Settings for the shortcut, what the Dock icon does, the default background and
@@ -22,7 +24,14 @@ don't.
   redaction blocks, and describe each one in the legend beside it.
 - The finished shot is composed onto a background with the legend down the right
   hand side, so a number on the image always has words to go with it.
+- Press V, P, A, B or R to pick a tool, and start typing a description the
+  moment a mark is placed — Escape sends focus back to the screenshot.
+- Marks can be moved and resized by their handles after they're drawn.
+- If Apple Intelligence is available, the title is suggested by the on-device
+  model from the screenshot itself. Nothing is sent anywhere.
+- ⇧⌘C copies just the legend as text.
+- The menu bar can reveal the last saved screenshot in the Finder.
 - Choose a background per shot — neutral, one of four gradients, a flat tone, or
   none — in light or dark.
 - Pressing Done copies the composed image to the clipboard, puts the legend on
-  it as text at the same time, and saves a PNG to Pictures › Shot and tell.
+  it as text at the same time, and saves a PNG to Pictures › Shot and Tell.

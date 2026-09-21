@@ -14,7 +14,7 @@ final class SettingsWindowController: NSWindowController {
             backing: .buffered,
             defer: false
         )
-        window.title = "Shot and tell Settings"
+        window.title = "Shot and Tell Settings"
         window.isReleasedWhenClosed = false
         window.setFrameAutosaveName("SettingsWindow")
 

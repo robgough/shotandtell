@@ -1,6 +1,6 @@
-# Releasing Shot and tell
+# Releasing Shot and Tell
 
-Shot and tell ships through the **Mac App Store** only. There is no Sparkle feed,
+Shot and Tell ships through the **Mac App Store** only. There is no Sparkle feed,
 no appcast and no notarized DMG — which makes this shorter than Dictator's
 release process, but it's also new ground: Dictator has only ever shipped
 Developer ID builds, so none of the App Store machinery is reused from there.
@@ -43,7 +43,7 @@ At <https://appstoreconnect.apple.com>, create a new macOS app:
 
 - **Bundle ID** `net.robgough.ShotAndTell` — register it first under
   Certificates, Identifiers & Profiles, with the App Sandbox capability.
-- **Name** "Shot and tell" (confirmed available).
+- **Name** "Shot and Tell" (confirmed available).
 - **Primary category** Productivity, matching `LSApplicationCategoryType`.
 - **Privacy policy URL** — required even though the app collects nothing. A page
   saying exactly that is enough.
@@ -52,11 +52,16 @@ At <https://appstoreconnect.apple.com>, create a new macOS app:
 
 ### 4. Provisioning profile
 
-A **Mac App Store** distribution profile for the bundle ID. Easiest path is to
-let Xcode manage it: open `ShotAndTell.xcodeproj` after `./gen`, select the
-target, and turn on "Automatically manage signing" *for the archive only* —
-`project.yml` pins Manual signing for CLI builds, which is what you want day to
-day but not what you want at archive time.
+A **Mac App Store** distribution profile for the bundle ID. Let Xcode create it
+on first use; there's nothing to configure in this repo.
+
+Don't bother switching the target to automatic signing before archiving. It
+wouldn't survive anyway — "Cutting a release" starts with `./gen`, which
+regenerates the project from `project.yml` and pins Manual signing again — and it
+isn't needed: the CLI archive is signed with whatever `.env` names (a Developer
+ID certificate, most likely), and Organizer **re-signs** it with the Apple
+Distribution certificate and the Mac App Store profile on the way out. The
+archive's own signature is throwaway.
 
 ## Cutting a release
 
@@ -82,11 +87,11 @@ day but not what you want at archive time.
    re-signing with the Apple Distribution certificate and the Mac App Store
    profile, builds the `.pkg` and uploads it.
 
-   There is a CLI path — `xcodebuild -exportArchive` with an
-   `ExportOptions.plist` whose `method` is `app-store-connect`, then uploading
-   the resulting `.pkg` with the Transporter app or `xcrun altool --upload-app`
-   — but `altool` has been on its way out for a while, so check what's current
-   before scripting it. Given releases are occasional, Organizer is fine.
+   The CLI path is `xcodebuild -exportArchive` with an `ExportOptions.plist`
+   whose `method` is `app-store-connect` and `destination` is `upload`, or
+   exporting the `.pkg` and sending it with the Transporter app. Note that
+   `xcrun altool --upload-app` is **not** an option: Apple discontinued it in
+   November 2023. Given releases are occasional, Organizer is fine.
 
 5. **Submit.** Attach the build in App Store Connect, fill in What's New, submit
    for review.

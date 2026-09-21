@@ -51,11 +51,12 @@ final class CaptureCoordinator {
 
             let content = try await CaptureService.shareableContent()
 
-            // Only region selection shows a magnifier, and only it pays for the
-            // screenshots that feed it.
-            let displayImages = request.mode == .region
-                ? await CaptureService.captureAllDisplays(content)
-                : [:]
+            // Region and window selection both freeze the screen behind the
+            // overlay — and region magnifies the same snapshot. Taking a whole
+            // screen chooses nothing, so it doesn't need one.
+            let displayImages = request.mode == .screen
+                ? [:]
+                : await CaptureService.captureAllDisplays(content)
 
             let outcome = await SelectionPresenter.present(
                 mode: request.mode,
