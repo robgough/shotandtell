@@ -34,10 +34,23 @@ enum ScreenRecordingPermission {
     /// offers System Settings if it has been refused.
     static func ensureGranted() async -> Bool {
         if isGranted { return true }
+
+        // The system prompt is raised asynchronously and `request()` answers
+        // with the state *now*, so a false on the very first ask means "the
+        // prompt is on screen, waiting" rather than "no". Stacking our own
+        // explanation on top of it at that moment gives the user two dialogs
+        // about the same thing, one of them in front of the one that matters.
+        let hasAskedBefore = UserDefaults.standard.bool(forKey: hasAskedKey)
+        UserDefaults.standard.set(true, forKey: hasAskedKey)
+
         if await request() { return true }
+        guard hasAskedBefore else { return false }
+
         explainDenial()
         return false
     }
+
+    private static let hasAskedKey = "hasAskedForScreenRecording"
 
     /// Shown after ScreenCaptureKit has refused.
     static func explainDenial() {
