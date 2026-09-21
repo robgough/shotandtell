@@ -5,7 +5,9 @@ things with numbered markers and describe them, and you get back a single image 
 the shot on a background and a numbered legend beside it — so "the heading in ① is too
 big" is unambiguous to a model that can only see pixels.
 
-Status: planning. Nothing built yet.
+Status: **all six phases built**. The app captures, marks up, composes and
+exports; it is signed, sandboxed and App Store ready but not yet submitted.
+`CHANGELOG.md` is what it does; this file is why it's shaped this way.
 
 ## Decisions taken
 
@@ -183,8 +185,9 @@ path — which is new ground, Dictator has only ever shipped Developer ID —
 TestFlight, submit. `CHANGELOG.md` from the first release on, same
 user-language style as Dictator.
 
-**Later (not v1):** iPhone/iPad app over `ShotAndTellKit`; capture history; scrolling
-capture; annotation presets.
+**Later (not v1):** iPhone/iPad app over `ShotAndTellKit` (promote Kit to a real
+package at that point — see CLAUDE.md); capture history; scrolling capture;
+annotation presets; window captures that keep the system shadow.
 
 ## Risks
 

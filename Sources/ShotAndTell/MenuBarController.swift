@@ -6,13 +6,14 @@ import AppKit
 /// *global* hotkey (phase 5), which works whatever app is frontmost. A menu key
 /// equivalent would only fire when Shot and tell already had focus, which is
 /// almost never the moment you want to take a screenshot.
-final class MenuBarController {
+final class MenuBarController: NSObject, NSMenuDelegate {
     private let statusItem: NSStatusItem
     private let coordinator: CaptureCoordinator
 
     init(coordinator: CaptureCoordinator) {
         self.coordinator = coordinator
         self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        super.init()
 
         if let button = statusItem.button {
             button.image = NSImage(
@@ -22,7 +23,17 @@ final class MenuBarController {
             button.image?.isTemplate = true
         }
 
-        statusItem.menu = buildMenu()
+        let menu = NSMenu()
+        menu.delegate = self
+        statusItem.menu = menu
+    }
+
+    /// Rebuilt each time the menu opens rather than once at launch, so a
+    /// shortcut or default capture mode changed in Settings shows up here
+    /// instead of going stale.
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        menu.removeAllItems()
+        populate(menu)
     }
 
     /// Counts a timed capture down in the menu bar. There's nowhere else to put
@@ -38,18 +49,17 @@ final class MenuBarController {
         }
     }
 
-    private func buildMenu() -> NSMenu {
-        let menu = NSMenu()
-
+    private func populate(_ menu: NSMenu) {
+        // "New Capture" does whatever the Dock icon does, so the two obvious
+        // ways in behave the same; the explicit modes are listed underneath for
+        // when you want a different one.
         let new = menu.addItem(withTitle: "New Capture", action: #selector(newCapture), keyEquivalent: "")
         new.target = self
-        // Shown, not bound: this is the *global* shortcut, which fires whatever
-        // app is frontmost. A menu key equivalent would only work when Shot and
-        // tell already had focus, which is almost never when you want a
-        // screenshot. `isAlternate` is not involved — the attributed title just
-        // puts the keys where people look for them.
         if let hotkey = Settings.shared.hotkey, hotkey.isUsable {
-            new.title = "New Capture"
+            // Shown in a tooltip, not bound as a key equivalent: this is the
+            // *global* shortcut. A menu key equivalent would only fire when Shot
+            // and tell already had focus, which is almost never when you want a
+            // screenshot.
             new.toolTip = "Global shortcut: \(hotkey.displayString)"
         }
 
@@ -79,8 +89,6 @@ final class MenuBarController {
         menu.addItem(withTitle: "About Shot and tell", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
         menu.addItem(.separator())
         menu.addItem(withTitle: "Quit Shot and tell", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
-
-        return menu
     }
 
     @objc private func newCapture() {
