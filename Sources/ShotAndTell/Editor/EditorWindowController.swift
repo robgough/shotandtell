@@ -13,12 +13,21 @@ final class EditorWindowController: NSWindowController, NSWindowDelegate {
     private let onClose: (EditorWindowController) -> Void
     private let onExported: (URL) -> Void
 
-    init(
+    convenience init(
         capture: CapturedImage,
         onExported: @escaping (URL) -> Void,
         onClose: @escaping (EditorWindowController) -> Void
     ) {
-        self.editorDocument = EditorDocument(capture: capture)
+        self.init(document: EditorDocument(capture: capture), onExported: onExported, onClose: onClose)
+    }
+
+    /// Reopening keeps the same document, so the marks and the title survive.
+    init(
+        document: EditorDocument,
+        onExported: @escaping (URL) -> Void,
+        onClose: @escaping (EditorWindowController) -> Void
+    ) {
+        self.editorDocument = document
         self.onClose = onClose
         self.onExported = onExported
 
@@ -40,7 +49,8 @@ final class EditorWindowController: NSWindowController, NSWindowDelegate {
             rootView: EditorView(
                 document: editorDocument,
                 onDone: { [weak self] in self?.finish() },
-                onCancel: { [weak self] in self?.close() }
+                onCopy: { [weak self] in self?.copyOnly() },
+                onCancel: { [weak self] in self?.discard() }
             )
         )
         // Left alone, NSHostingController propagates the SwiftUI view's own
@@ -64,8 +74,44 @@ final class EditorWindowController: NSWindowController, NSWindowDelegate {
         window?.makeKeyAndOrderFront(nil)
     }
 
+    /// Exposed so the app delegate can hold on to it and reopen the capture
+    /// later. Not called `document`: NSWindowController already has one.
+    var capturedDocument: EditorDocument { editorDocument }
+
     private func finish() {
         Task { await finishExport() }
+    }
+
+    /// Copy without saving or closing — for when you want the image now and
+    /// aren't finished marking it up.
+    private func copyOnly() {
+        Task {
+            do {
+                _ = try await Exporter.export(editorDocument.composition, saveToDisk: false)
+            } catch {
+                present(error)
+            }
+        }
+    }
+
+    /// Throwing away a capture with marks on it is worth one question. Throwing
+    /// away an untouched one isn't.
+    private func discard() {
+        guard !editorDocument.composition.annotations.isEmpty else {
+            close()
+            return
+        }
+
+        let alert = NSAlert()
+        alert.messageText = "Discard this capture?"
+        alert.informativeText = "It has marks on it that haven't been copied or saved."
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "Discard")
+        alert.addButton(withTitle: "Keep Editing")
+        guard let window else { return }
+        alert.beginSheetModal(for: window) { [weak self] response in
+            if response == .alertFirstButtonReturn { self?.close() }
+        }
     }
 
     private func finishExport() async {
@@ -77,13 +123,17 @@ final class EditorWindowController: NSWindowController, NSWindowDelegate {
             }
             close()
         } catch {
-            let alert = NSAlert()
-            alert.messageText = "Couldn't finish the screenshot"
-            alert.informativeText = error.localizedDescription
-            alert.alertStyle = .warning
-            alert.addButton(withTitle: "OK")
-            alert.runModal()
+            present(error)
         }
+    }
+
+    private func present(_ error: Error) {
+        let alert = NSAlert()
+        alert.messageText = "Couldn't finish the screenshot"
+        alert.informativeText = error.localizedDescription
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "OK")
+        alert.runModal()
     }
 
     func windowWillReturnUndoManager(_ window: NSWindow) -> UndoManager? {

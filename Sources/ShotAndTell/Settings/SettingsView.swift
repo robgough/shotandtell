@@ -55,6 +55,8 @@ struct SettingsView: View {
                         Text(scale.title).tag(scale)
                     }
                 }
+                Toggle("Also copy the legend as text", isOn: $settings.copiesLegendText)
+                    .help("Off by default: apps that prefer text would paste the words instead of the picture. ⇧⌘C copies the legend whenever you want it.")
                 Toggle("Also save a PNG", isOn: $settings.savesToDisk)
                 if settings.savesToDisk {
                     LabeledContent("Save to") {
@@ -67,7 +69,7 @@ struct SettingsView: View {
                         }
                     }
                 }
-                Text("The image always goes on the clipboard, with the legend as text beside it.")
+                Text("The image always goes on the clipboard. ⇧⌘C copies the legend as text on its own.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

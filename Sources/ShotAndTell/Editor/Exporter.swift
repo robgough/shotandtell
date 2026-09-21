@@ -34,7 +34,7 @@ enum Exporter {
     /// Done. `Task.detached` is what actually moves it, and `Composition` is
     /// Sendable so it can go.
     @discardableResult
-    static func export(_ composition: Composition) async throws -> Result {
+    static func export(_ composition: Composition, saveToDisk: Bool = true) async throws -> Result {
         let settings = Settings.shared
         let palette = Palette.resolve(background: composition.background, appearance: composition.appearance)
         let layout = CompositionLayout.solve(composition, palette: palette)
@@ -48,17 +48,20 @@ enum Exporter {
 
         let markdown = MarkdownLegend.render(composition)
 
-        // One pasteboard item carrying both: pasting into a chat gets the
-        // picture, pasting into a text field gets the words.
+        // The image, and only the image unless asked otherwise. Putting the
+        // legend text on the pasteboard at the same time means anything that
+        // prefers text pastes the words and drops the picture — which is the
+        // opposite of what pressing a button labelled "copy the screenshot"
+        // should do.
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
         pasteboard.setData(png, forType: .png)
-        if !markdown.isEmpty {
+        if settings.copiesLegendText, !markdown.isEmpty {
             pasteboard.setString(markdown, forType: .string)
         }
 
         var fileURL: URL?
-        if settings.savesToDisk {
+        if saveToDisk, settings.savesToDisk {
             fileURL = try write(png, title: composition.title, settings: settings)
         }
 

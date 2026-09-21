@@ -105,6 +105,24 @@ nonisolated enum Compositor {
             return
         }
 
+        // A window capture already has its own rounded corners cut out of the
+        // alpha, and they are not the same radius as ours. Clipping a second
+        // shape over the first leaves a wedge between the two curves, and the
+        // opaque shape drawn to cast the shadow shows through it as a dark
+        // notch in the corner. So: let the window keep its own outline, and cast
+        // the shadow from the image's alpha rather than from a rectangle.
+        if composition.capture.source.hasOwnShape {
+            context.saveGState()
+            context.setShadow(
+                offset: CGSize(width: 0, height: -10),
+                blur: 26,
+                color: CGColor(srgbRed: 0, green: 0, blue: 0, alpha: 0.28)
+            )
+            context.draw(composition.capture.image, in: rect)
+            context.restoreGState()
+            return
+        }
+
         let path = CGPath(
             roundedRect: rect,
             cornerWidth: CompositionLayout.captureCornerRadius,

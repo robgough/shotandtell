@@ -9,6 +9,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private var menuBar: MenuBarController?
     private var editors: [EditorWindowController] = []
+    /// The last capture whose window was closed, kept so it can be reopened.
+    /// Holding one screenshot in memory is cheap next to losing one to a
+    /// mistyped Escape.
+    private var lastClosedDocument: EditorDocument?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Built by hand rather than loaded from a nib: with `@main` on the
@@ -60,7 +64,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 self?.menuBar?.lastSavedURL = url
             },
             onClose: { [weak self] controller in
-                self?.editors.removeAll { $0 === controller }
+                guard let self else { return }
+                lastClosedDocument = controller.capturedDocument
+                menuBar?.canReopenCapture = true
+                editors.removeAll { $0 === controller }
+            }
+        )
+        editors.append(controller)
+        controller.show()
+    }
+
+    /// Reopens the last capture with its marks intact — the way back from an
+    /// accidental close, and from deciding a shot needed one more note.
+    @objc func reopenLastCapture() {
+        guard let document = lastClosedDocument else { return }
+        let controller = EditorWindowController(
+            document: document,
+            onExported: { [weak self] url in self?.menuBar?.lastSavedURL = url },
+            onClose: { [weak self] controller in
+                guard let self else { return }
+                lastClosedDocument = controller.capturedDocument
+                editors.removeAll { $0 === controller }
             }
         )
         editors.append(controller)

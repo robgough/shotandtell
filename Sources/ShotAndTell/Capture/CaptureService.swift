@@ -53,7 +53,7 @@ nonisolated enum CaptureService {
         config.height = pixels(local.height, scale)
         config.showsCursor = false
 
-        return try await run(filter: filter, config: config, scale: scale, description: nil)
+        return try await run(filter: filter, config: config, scale: scale, source: .region, description: nil)
     }
 
     static func capture(window: SCWindow) async throws -> CapturedImage {
@@ -70,7 +70,7 @@ nonisolated enum CaptureService {
         config.ignoreShadows = true
         config.includeChildWindows = true
 
-        return try await run(filter: filter, config: config, scale: scale, description: describe(window))
+        return try await run(filter: filter, config: config, scale: scale, source: .window, description: describe(window))
     }
 
     static func capture(display: SCDisplay, content: SCShareableContent) async throws -> CapturedImage {
@@ -82,7 +82,7 @@ nonisolated enum CaptureService {
         config.height = pixels(filter.contentRect.height, scale)
         config.showsCursor = false
 
-        return try await run(filter: filter, config: config, scale: scale, description: nil)
+        return try await run(filter: filter, config: config, scale: scale, source: .display, description: nil)
     }
 
     /// Every display, captured once before the overlay goes up.
@@ -107,10 +107,16 @@ nonisolated enum CaptureService {
 
     // MARK: - Plumbing
 
-    private static func run(filter: SCContentFilter, config: SCScreenshotConfiguration, scale: CGFloat, description: String?) async throws -> CapturedImage {
+    private static func run(
+        filter: SCContentFilter,
+        config: SCScreenshotConfiguration,
+        scale: CGFloat,
+        source: CapturedImage.Source,
+        description: String?
+    ) async throws -> CapturedImage {
         let output = try await SCScreenshotManager.captureScreenshot(contentFilter: filter, configuration: config)
         guard let image = output.sdrImage else { throw Failure.captureProducedNoImage }
-        return CapturedImage(image: image, scale: scale, sourceDescription: description)
+        return CapturedImage(image: image, source: source, scale: scale, sourceDescription: description)
     }
 
     /// A filter over one display that leaves *us* out of it.

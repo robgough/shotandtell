@@ -30,7 +30,12 @@ don't.
 - Marks can be moved and resized by their handles after they're drawn.
 - If Apple Intelligence is available, the title is suggested by the on-device
   model from the screenshot itself. Nothing is sent anywhere.
-- ⇧⌘C copies just the legend as text.
+- ⇧⌘C copies just the legend as text. The image alone goes on the clipboard
+  otherwise, so pasting into a chat gets the picture.
+- A Copy button copies the finished image without closing the editor; the main
+  button now says what it does — Copy & Close.
+- Reopen the last capture from the menu bar, marks and all, if you close it by
+  mistake or think of something else to point at.
 - The menu bar can reveal the last saved screenshot in the Finder.
 - Choose a background per shot — neutral, one of four gradients, a flat tone, or
   none — in light or dark.

@@ -9,6 +9,7 @@ import SwiftUI
 struct EditorView: View {
     @Bindable var document: EditorDocument
     let onDone: () -> Void
+    let onCopy: () -> Void
     let onCancel: () -> Void
 
     @FocusState private var focusedEntry: UUID?
@@ -71,12 +72,21 @@ struct EditorView: View {
             .help("Copy the legend as text (⇧⌘C)")
             .disabled(document.composition.numbered.isEmpty)
 
-            Button("Cancel", action: onCancel)
-                .keyboardShortcut(.cancelAction)
+            Button("Copy", action: onCopy)
+                .keyboardShortcut("c", modifiers: [.command, .option])
+                .help("Copy the finished image and leave this window open (⌥⌘C)")
 
-            Button("Done", action: onDone)
-                .keyboardShortcut(.defaultAction)
+            // Deliberately not `.cancelAction`. That binds Escape, and Escape is
+            // what you press to get out of a text field — losing the whole
+            // capture, with nothing to show for it, because your finger went to
+            // the wrong key.
+            Button("Discard", action: onCancel)
+                .help("Throw this capture away")
+
+            Button("Copy & Close", action: onDone)
+                .keyboardShortcut(.return, modifiers: .command)
                 .buttonStyle(.borderedProminent)
+                .help(doneHelp)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
@@ -146,6 +156,12 @@ struct EditorView: View {
             }
             .padding(16)
         }
+    }
+
+    private var doneHelp: String {
+        Settings.shared.savesToDisk
+            ? "Copies the finished image, saves a PNG to \(Settings.shared.saveFolderDisplayName), and closes (⌘↩)"
+            : "Copies the finished image and closes (⌘↩)"
     }
 
     private var emptyHint: String {

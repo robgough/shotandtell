@@ -12,6 +12,8 @@ final class MenuBarController: NSObject, NSMenuDelegate {
     /// The most recent export, so it can be revealed. Not persisted — a stale
     /// path from three days ago is a worse menu item than none.
     var lastSavedURL: URL?
+    /// Whether there's a closed capture to bring back.
+    var canReopenCapture = false
 
     init(coordinator: CaptureCoordinator) {
         self.coordinator = coordinator
@@ -84,8 +86,15 @@ final class MenuBarController: NSObject, NSMenuDelegate {
         let timedItem = menu.addItem(withTitle: "Timed Capture", action: nil, keyEquivalent: "")
         timedItem.submenu = timed
 
-        if let lastSavedURL {
+        if canReopenCapture {
             menu.addItem(.separator())
+            let reopen = menu.addItem(withTitle: "Reopen Last Capture", action: #selector(AppDelegate.reopenLastCapture), keyEquivalent: "")
+            reopen.target = NSApp.delegate
+            reopen.toolTip = "Open the last screenshot again, with its marks"
+        }
+
+        if let lastSavedURL {
+            if !canReopenCapture { menu.addItem(.separator()) }
             let reveal = menu.addItem(withTitle: "Reveal Last Screenshot in Finder", action: #selector(revealLastSaved), keyEquivalent: "")
             reveal.target = self
             reveal.toolTip = lastSavedURL.path(percentEncoded: false)

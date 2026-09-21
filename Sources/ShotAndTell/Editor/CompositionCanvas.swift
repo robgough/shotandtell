@@ -333,17 +333,23 @@ final class CompositionCanvasView: NSView {
             lastMovePoint = nil
             resizing = nil
             document.endCoalescing()
+            // Always redraw, including on the paths that create nothing.
+            // Otherwise the half-drawn shape stays painted on the canvas with
+            // no annotation behind it, which looks exactly like a box that
+            // refused to finish.
+            needsDisplay = true
         }
 
-        guard document.tool.isDragged, let start = dragStart else { return }
+        guard document.tool.isDragged, let start = dragStart, let layout = cachedLayout else { return }
         let end = convert(event.locationInWindow, from: nil)
 
-        // The start has to be on the capture, but the end is clamped rather than
-        // rejected: dragging a redaction off the edge to cover something at the
-        // edge is the natural gesture, and silently producing nothing is the
-        // worst possible response to it.
-        guard let from = normalised(start), let layoutForEnd = cachedLayout else { return }
-        let to = Compositor.normalise(canvasPoint(end), in: layoutForEnd.captureRect).clampedToUnitSquare()
+        // Both ends are clamped onto the capture rather than required to start
+        // on it. Boxing something in a corner means starting the drag out in the
+        // margin — it's the natural gesture, and it used to produce nothing at
+        // all. A drag entirely outside collapses to an empty rect and is
+        // rejected by the size check below.
+        let from = Compositor.normalise(canvasPoint(start), in: layout.captureRect).clampedToUnitSquare()
+        let to = Compositor.normalise(canvasPoint(end), in: layout.captureRect).clampedToUnitSquare()
 
         switch document.tool {
         case .arrow:
@@ -359,8 +365,7 @@ final class CompositionCanvasView: NSView {
                 width: abs(to.x - from.x),
                 height: abs(to.y - from.y)
             )
-            guard let layout = cachedLayout,
-                  rect.width * layout.captureRect.width > 6,
+            guard rect.width * layout.captureRect.width > 6,
                   rect.height * layout.captureRect.height > 6
             else { return }
             document.add(Annotation(kind: document.tool == .box ? .box(rect) : .redaction(rect)))

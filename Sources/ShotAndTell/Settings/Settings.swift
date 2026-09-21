@@ -44,6 +44,14 @@ final class Settings {
     var defaultBackground: BackgroundStyle { didSet { save() } }
     var appearanceMode: AppearanceMode { didSet { save() } }
     var savesToDisk: Bool { didSet { save() } }
+    /// Whether the legend text rides along on the clipboard beside the image.
+    ///
+    /// Off by default, and that default is the point: with both on the
+    /// pasteboard, anything that prefers text — a chat box, an editor, a
+    /// terminal — pastes the words and silently drops the picture, which is
+    /// maddening when you just took a screenshot. ⇧⌘C copies the legend on
+    /// purpose when that's what you want.
+    var copiesLegendText: Bool { didSet { save() } }
     var exportScale: ExportScale { didSet { save() } }
     /// What clicking the Dock icon starts. Region is the common case, but
     /// someone who mostly grabs whole windows shouldn't have to use the menu.
@@ -65,6 +73,7 @@ final class Settings {
     private init() {
         defaults.register(defaults: [
             Key.savesToDisk: true,
+            Key.copiesLegendText: false,
             Key.exportScale: ExportScale.retinaCapped.rawValue,
             Key.appearanceMode: AppearanceMode.system.rawValue,
             Key.dockClickMode: CaptureMode.region.rawValue,
@@ -74,6 +83,7 @@ final class Settings {
         defaultBackground = Self.decode(BackgroundStyle.self, from: defaults.data(forKey: Key.background)) ?? .neutral
         appearanceMode = AppearanceMode(rawValue: defaults.string(forKey: Key.appearanceMode) ?? "") ?? .system
         savesToDisk = defaults.bool(forKey: Key.savesToDisk)
+        copiesLegendText = defaults.bool(forKey: Key.copiesLegendText)
         exportScale = ExportScale(rawValue: defaults.string(forKey: Key.exportScale) ?? "") ?? .retinaCapped
         dockClickMode = CaptureMode(rawValue: defaults.string(forKey: Key.dockClickMode) ?? "") ?? .region
         saveFolderBookmark = defaults.data(forKey: Key.saveFolderBookmark)
@@ -157,6 +167,7 @@ final class Settings {
         defaults.set(Self.encode(defaultBackground), forKey: Key.background)
         defaults.set(appearanceMode.rawValue, forKey: Key.appearanceMode)
         defaults.set(savesToDisk, forKey: Key.savesToDisk)
+        defaults.set(copiesLegendText, forKey: Key.copiesLegendText)
         defaults.set(exportScale.rawValue, forKey: Key.exportScale)
         defaults.set(dockClickMode.rawValue, forKey: Key.dockClickMode)
     }
@@ -176,6 +187,7 @@ final class Settings {
         static let background = "defaultBackground"
         static let appearanceMode = "appearanceMode"
         static let savesToDisk = "savesToDisk"
+        static let copiesLegendText = "copiesLegendText"
         static let exportScale = "exportScale"
         static let dockClickMode = "dockClickMode"
         static let saveFolderBookmark = "saveFolderBookmark"
