@@ -1,37 +1,53 @@
 import SwiftUI
 
-/// The editor: tools along the top, the composition on the left exactly as it
-/// will be exported, and the legend on the right as editable rows.
+/// The editor: the composition filling the window, tools in the window's own
+/// toolbar, and the legend as an inspector on the right.
 ///
 /// Clicking the canvas drops a marker *and* moves the cursor into its
-/// description, so the whole flow is click, type, click, type without reaching
-/// for the mouse in between. That's the interaction the app exists for.
+/// description, so the whole flow is click, type, Return, click, type without
+/// reaching for the mouse in between. That's the interaction the app exists for.
 struct EditorView: View {
     @Bindable var document: EditorDocument
     let onDone: () -> Void
     let onCopy: () -> Void
-    let onCancel: () -> Void
 
     @FocusState private var focusedEntry: UUID?
     @Namespace private var toolSelection
 
+    /// The same colours the exported image uses, so a number in the legend is
+    /// the red it will actually be printed in rather than the system red.
+    private var palette: Palette {
+        Palette.resolve(
+            background: document.composition.background,
+            appearance: document.composition.appearance
+        )
+    }
+
     var body: some View {
-        VStack(spacing: 0) {
-            toolbar
-            HStack(spacing: 0) {
-                CompositionCanvas(
-                    document: document,
-                    revision: document.revision,
-                    focusRequests: document.canvasFocusRequests
-                )
-                    .frame(minWidth: 420, minHeight: 320)
-                Divider()
-                legend
-                    .frame(width: 300)
-                    .background(.regularMaterial)
+        CompositionCanvas(
+            document: document,
+            revision: document.revision,
+            focusRequests: document.canvasFocusRequests
+        )
+        // The composition runs under the floating toolbar; the canvas fits
+        // itself into the safe area so nothing important hides behind it.
+        .ignoresSafeArea(edges: .top)
+        .inspector(isPresented: .constant(true)) {
+            legend.inspectorColumnWidth(min: 260, ideal: 300, max: 420)
+        }
+        .toolbar {
+            ToolbarItem(placement: .navigation) { toolSelector }
+            ToolbarSpacer(.flexible)
+            ToolbarItem { backgroundMenu }
+            ToolbarSpacer(.fixed)
+            ToolbarItemGroup(placement: .primaryAction) {
+                copyMenu
+                Button("Copy & Close", action: onDone)
+                    .keyboardShortcut(.return, modifiers: .command)
+                    .buttonStyle(.glassProminent)
+                    .help(doneHelp)
             }
         }
-        .frame(minWidth: 780, minHeight: 460)
         .onChange(of: document.pendingFocus) { _, id in
             guard let id else { return }
             // A cycle later, so the row exists before focus is asked for.
@@ -44,68 +60,20 @@ struct EditorView: View {
         }
     }
 
-    private var toolbar: some View {
-        HStack(spacing: 10) {
-            toolSelector
-
-            Spacer()
-
-            backgroundMenu
-
-            Button {
-                let markdown = MarkdownLegend.render(document.composition)
-                NSPasteboard.general.clearContents()
-                NSPasteboard.general.setString(markdown, forType: .string)
-            } label: {
-                Label("Copy Legend", systemImage: "text.badge.checkmark")
-            }
-            .labelStyle(.iconOnly)
-            .buttonStyle(.glass)
-            .keyboardShortcut("c", modifiers: [.command, .shift])
-            .help("Copy the legend as text (⇧⌘C)")
-            .disabled(document.composition.numbered.isEmpty)
-
-            Button("Copy", action: onCopy)
-                .buttonStyle(.glass)
-                .keyboardShortcut("c", modifiers: [.command, .option])
-                .help("Copy the finished image and leave this window open (⌥⌘C)")
-
-            // Deliberately not `.cancelAction`. That binds Escape, and Escape is
-            // what you press to get out of a text field — losing the whole
-            // capture, with nothing to show for it, because your finger went to
-            // the wrong key.
-            Button("Discard", action: onCancel)
-                .buttonStyle(.glass)
-                .help("Throw this capture away")
-
-            Button("Copy & Close", action: onDone)
-                .keyboardShortcut(.return, modifiers: .command)
-                .buttonStyle(.glassProminent)
-                .help(doneHelp)
-        }
-        // Leading room for the traffic lights: the title bar is transparent and
-        // the content runs underneath it.
-        .padding(.leading, 82)
-        .padding(.trailing, 14)
-        .padding(.vertical, 10)
-        .background(.bar)
-    }
+    // MARK: - Toolbar
 
     /// One control that happens to have five parts, not five controls.
     ///
     /// Built by hand rather than as a segmented `Picker` because the segments
     /// carry their keyboard shortcut next to the icon, and a segmented picker
-    /// renders only an icon *or* a label. The glass is on the container, so the
-    /// whole thing reads as a single selector; the selected segment is a pill
-    /// that slides between them.
+    /// renders only an icon *or* a label. The toolbar item supplies the glass
+    /// around it — adding our own here would stack one glass layer on another.
     private var toolSelector: some View {
         HStack(spacing: 2) {
             ForEach(EditorTool.allCases) { tool in
                 toolSegment(tool)
             }
         }
-        .padding(3)
-        .glassEffect(in: .capsule)
         // Without this the toolbar squeezes the segments to fit everything else
         // in, and the shortcut letters are the first thing to get truncated
         // away — which is the whole reason they're there.
@@ -145,6 +113,24 @@ struct EditorView: View {
         .help("\(tool.title) — press \(key)")
     }
 
+    /// Copy the image, with the text-only variant tucked inside rather than
+    /// sitting in the toolbar as an unlabelled glyph nobody can decode.
+    private var copyMenu: some View {
+        Menu("Copy") {
+            Button("Copy Legend as Text") {
+                let markdown = MarkdownLegend.render(document.composition)
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(markdown, forType: .string)
+            }
+            .keyboardShortcut("c", modifiers: [.command, .shift])
+            .disabled(document.composition.numbered.isEmpty)
+        } primaryAction: {
+            onCopy()
+        }
+        .menuStyle(.button)
+        .help("Copy the finished image and leave this window open (⌥⌘C)")
+    }
+
     private var backgroundMenu: some View {
         Menu {
             Picker("Background", selection: $document.composition.background) {
@@ -171,9 +157,19 @@ struct EditorView: View {
             Label("Background", systemImage: "paintpalette")
         }
         .menuStyle(.button)
-        .buttonStyle(.glass)
-        .fixedSize()
+        // A unified-compact toolbar collapses a Label to its icon, and a lone
+        // paintpalette glyph is a guess rather than a control.
+        .labelStyle(.titleAndIcon)
+        .help("Background and appearance of the finished image")
     }
+
+    private var doneHelp: String {
+        Settings.shared.savesToDisk
+            ? "Copies the finished image, saves a PNG to \(Settings.shared.saveFolderDisplayName), and closes (⌘↩)"
+            : "Copies the finished image and closes (⌘↩)"
+    }
+
+    // MARK: - Legend
 
     private var legend: some View {
         ScrollView {
@@ -193,11 +189,13 @@ struct EditorView: View {
                 Divider()
 
                 if document.composition.numbered.isEmpty {
-                    Text(emptyHint)
+                    // One line. The tools carry their own shortcuts and their own
+                    // tooltips; a paragraph explaining the focus model here reads
+                    // as an apology for it.
+                    Text("Click the screenshot to add a mark.")
                         .font(.callout)
                         .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .padding(.top, 4)
+                        .padding(.top, 2)
                 }
 
                 ForEach(document.composition.numbered, id: \.annotation.id) { number, annotation in
@@ -212,37 +210,13 @@ struct EditorView: View {
         }
     }
 
-    /// Hands the keyboard back to the canvas so the tool keys work again.
-    private func releaseFocus() {
-        focusedEntry = nil
-        document.focusCanvas()
-    }
-
-    private var doneHelp: String {
-        Settings.shared.savesToDisk
-            ? "Copies the finished image, saves a PNG to \(Settings.shared.saveFolderDisplayName), and closes (⌘↩)"
-            : "Copies the finished image and closes (⌘↩)"
-    }
-
-    private var emptyHint: String {
-        """
-        Pick a tool and click the screenshot. Each mark gets a number, and \
-        whatever you type here becomes its entry in the legend.
-
-        The keys on the buttons pick a tool while the screenshot has focus. \
-        After a mark is placed you're back in Select, so the next click picks \
-        something up rather than making another one — and Escape in a \
-        description hands focus back to the screenshot.
-        """
-    }
-
     private func entryRow(number: Int, annotation: Annotation) -> some View {
         HStack(alignment: .top, spacing: 10) {
             Text("\(number)")
                 .font(.caption.weight(.bold))
                 .foregroundStyle(.white)
                 .frame(width: 20, height: 20)
-                .background(Color(nsColor: .systemRed), in: .circle)
+                .background(Color(cgColor: palette.marker), in: .circle)
 
             TextField("Describe this", text: document.binding(for: annotation.id), axis: .vertical)
                 .textFieldStyle(.plain)
@@ -284,7 +258,7 @@ struct EditorView: View {
     private var redactionSummary: some View {
         HStack(spacing: 10) {
             RoundedRectangle(cornerRadius: 3)
-                .fill(Color(nsColor: .labelColor).opacity(0.85))
+                .fill(Color(cgColor: palette.redaction))
                 .frame(width: 22, height: 14)
             Text(document.composition.redactions.count == 1
                  ? "1 redacted area"
@@ -294,5 +268,11 @@ struct EditorView: View {
             Spacer()
         }
         .padding(.top, 4)
+    }
+
+    /// Hands the keyboard back to the canvas so the tool keys work again.
+    private func releaseFocus() {
+        focusedEntry = nil
+        document.focusCanvas()
     }
 }

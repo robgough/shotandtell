@@ -40,6 +40,9 @@ don't.
   button now says what it does — Copy & Close.
 - Reopen the last capture from the menu bar, marks and all, if you close it by
   mistake or think of something else to point at.
+- The editor puts the tools in the window's own toolbar, fills the window with
+  the background you'll get, and puts the legend in a resizable inspector.
+- Closing an editor with marks on it asks first, from ⌘W or the red button.
 - The menu bar can reveal the last saved screenshot in the Finder.
 - The framing never touches the screenshot's own pixels: the hairline sits
   outside the image and the corners blend into the background, so every captured

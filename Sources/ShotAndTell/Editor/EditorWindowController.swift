@@ -42,6 +42,7 @@ final class EditorWindowController: NSWindowController, NSWindowDelegate {
         // separate title bar, which is what a Mac app looks like now.
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
+        window.toolbarStyle = .unifiedCompact
         window.isReleasedWhenClosed = false
         window.setFrameAutosaveName("EditorWindow")
 
@@ -53,16 +54,24 @@ final class EditorWindowController: NSWindowController, NSWindowDelegate {
             rootView: EditorView(
                 document: editorDocument,
                 onDone: { [weak self] in self?.finish() },
-                onCopy: { [weak self] in self?.copyOnly() },
-                onCancel: { [weak self] in self?.discard() }
+                onCopy: { [weak self] in self?.copyOnly() }
             )
         )
+        // Bridges SwiftUI's `.toolbar` into this window's real NSToolbar, which
+        // is what buys the standard traffic-light spacing and unified title-bar
+        // height. Hand-rolling a toolbar row inside the content view can't get
+        // there: NSHostingController honours the title bar's safe area, so the
+        // content already starts below it, and any leading padding added to
+        // clear the traffic lights just opens a hole beside controls that are
+        // a row too low. Must be set before the controller becomes the content.
+        hosting.sceneBridgingOptions = [.toolbars]
         // Left alone, NSHostingController propagates the SwiftUI view's own
-        // sizing to the window, and the editor opened at its 780×460 minimum
-        // instead of the size asked for above. The window decides how big it is.
+        // sizing to the window, and the editor opened at its minimum instead of
+        // the size asked for above. The window decides how big it is.
         hosting.sizingOptions = []
         window.contentViewController = hosting
-        window.setContentSize(NSSize(width: 1040, height: 660))
+        window.setContentSize(NSSize(width: 1100, height: 700))
+        window.contentMinSize = NSSize(width: 900, height: 540)
         window.center()
         // The document's own undo manager, so ⌘Z in the window undoes marks
         // rather than whatever the focused text field last did.
@@ -98,24 +107,42 @@ final class EditorWindowController: NSWindowController, NSWindowDelegate {
         }
     }
 
+    /// Closing the window *is* discarding, so the question is asked here rather
+    /// than by a destructive button in the toolbar — which isn't a Mac pattern,
+    /// and left ⌘W and the red button as a silent way to lose the same work.
+    ///
     /// Throwing away a capture with marks on it is worth one question. Throwing
     /// away an untouched one isn't.
-    private func discard() {
-        guard !editorDocument.composition.annotations.isEmpty else {
-            close()
-            return
+    func windowShouldClose(_ sender: NSWindow) -> Bool {
+        if editorDocument.composition.annotations.isEmpty || hasConfirmedDiscard {
+            return true
         }
 
         let alert = NSAlert()
         alert.messageText = "Discard this capture?"
         alert.informativeText = "It has marks on it that haven't been copied or saved."
         alert.alertStyle = .warning
-        alert.addButton(withTitle: "Discard")
+        // Keep Editing first, so it's the default and Return doesn't destroy the
+        // capture. The destructive option should take a deliberate click.
         alert.addButton(withTitle: "Keep Editing")
-        guard let window else { return }
-        alert.beginSheetModal(for: window) { [weak self] response in
-            if response == .alertFirstButtonReturn { self?.close() }
+        let discard = alert.addButton(withTitle: "Discard")
+        discard.hasDestructiveAction = true
+        alert.beginSheetModal(for: sender) { [weak self] response in
+            guard response == .alertSecondButtonReturn, let self else { return }
+            hasConfirmedDiscard = true
+            close()
         }
+        return false
+    }
+
+    /// Set once the sheet has been answered, so the close it then performs isn't
+    /// intercepted and asked about all over again.
+    private var hasConfirmedDiscard = false
+
+    /// Exporting is not discarding — don't ask on the way out of Copy & Close.
+    private func closeAfterExport() {
+        hasConfirmedDiscard = true
+        close()
     }
 
     private func finishExport() async {
@@ -125,7 +152,7 @@ final class EditorWindowController: NSWindowController, NSWindowDelegate {
                 Log.app.notice("Saved to \(url.lastPathComponent, privacy: .public)")
                 onExported(url)
             }
-            close()
+            closeAfterExport()
         } catch {
             present(error)
         }

@@ -15,6 +15,7 @@ final class CompositionCanvasView: NSView {
 
     private var cachedImage: CGImage?
     private var cachedLayout: CompositionLayout?
+    private var cachedPalette: Palette?
     private var cacheIsStale = true
 
     /// Where the composition is drawn inside the view, and how much it was
@@ -41,6 +42,8 @@ final class CompositionCanvasView: NSView {
     private static let handleSize: CGFloat = 8
 
     override var isFlipped: Bool { false }
+    /// The whole view is painted now, so AppKit can skip whatever is behind it.
+    override var isOpaque: Bool { true }
     override var acceptsFirstResponder: Bool { true }
 
     func invalidate() {
@@ -55,10 +58,14 @@ final class CompositionCanvasView: NSView {
         let composition = document.composition
 
         let palette = Palette.resolve(background: composition.background, appearance: composition.appearance)
+        cachedPalette = palette
         // No legend on the canvas: the panel to the right is the legend, and
         // showing it twice just makes the screenshot smaller.
         let layout = CompositionLayout.solve(composition, palette: palette, includeLegend: false)
-        let fit = Self.fit(layout.canvasSize, in: bounds.insetBy(dx: 12, dy: 12))
+        // safeAreaRect, not bounds: the canvas runs underneath the window's
+        // toolbar, and the composition shouldn't be fitted into the part of
+        // itself that's covered by it.
+        let fit = Self.fit(layout.canvasSize, in: safeAreaRect)
         let scaleChanged = abs(fit.width - fitRect.width) > 0.5
 
         fitRect = fit
@@ -73,7 +80,14 @@ final class CompositionCanvasView: NSView {
         let backing = window?.backingScaleFactor ?? 2
         let renderScale = max(0.5, min(backing, fitScale * backing))
 
-        cachedImage = try? Compositor.render(composition, scale: renderScale, includeLegend: false).image
+        // Rendered without its background, because the view paints that across
+        // its whole area — see draw(_:).
+        cachedImage = try? Compositor.render(
+            composition,
+            scale: renderScale,
+            includeLegend: false,
+            drawsBackground: false
+        ).image
         cacheIsStale = false
     }
 
@@ -92,6 +106,14 @@ final class CompositionCanvasView: NSView {
     override func draw(_ dirtyRect: NSRect) {
         rerenderIfNeeded()
         guard let context = NSGraphicsContext.current?.cgContext else { return }
+
+        // The composition's own background, edge to edge. Drawn here rather than
+        // baked into the image so the window becomes the composition instead of
+        // a tinted rectangle marooned in a grey void — and drawn by the
+        // compositor's own routine so the gradient can't seam against itself.
+        if let cachedPalette {
+            Compositor.drawBackground(palette: cachedPalette, in: bounds, context: context)
+        }
 
         if let cachedImage {
             context.interpolationQuality = .high

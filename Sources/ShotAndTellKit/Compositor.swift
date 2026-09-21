@@ -23,7 +23,16 @@ nonisolated enum Compositor {
     }
 
     /// `scale` is pixels per point: 1 for a quick preview, 2 for export.
-    static func render(_ composition: Composition, scale: CGFloat, includeLegend: Bool = true) throws -> Output {
+    /// `drawsBackground: false` leaves the canvas transparent, for callers that
+    /// paint the background themselves across a larger area — the editor does
+    /// this so the composition's colour runs to the edges of the window instead
+    /// of stopping at a rectangle floating in the middle of it.
+    static func render(
+        _ composition: Composition,
+        scale: CGFloat,
+        includeLegend: Bool = true,
+        drawsBackground: Bool = true
+    ) throws -> Output {
         let palette = Palette.resolve(background: composition.background, appearance: composition.appearance)
         let layout = CompositionLayout.solve(composition, palette: palette, includeLegend: includeLegend)
 
@@ -54,7 +63,9 @@ nonisolated enum Compositor {
         context.setShouldAntialias(true)
         context.interpolationQuality = .high
 
-        drawCanvas(layout: layout, palette: palette, size: drawnSize, in: context)
+        if drawsBackground {
+            drawBackground(palette: palette, in: CGRect(origin: .zero, size: drawnSize), context: context)
+        }
         drawCapture(composition, layout: layout, palette: palette, in: context)
         drawAnnotations(composition, layout: layout, palette: palette, in: context)
         drawLegend(composition, layout: layout, palette: palette, in: context)
@@ -65,8 +76,10 @@ nonisolated enum Compositor {
 
     // MARK: - Canvas
 
-    private static func drawCanvas(layout: CompositionLayout, palette: Palette, size: CGSize, in context: CGContext) {
-        let bounds = CGRect(origin: .zero, size: size)
+    /// Shared with the editor's canvas, which paints the same background across
+    /// its whole viewport. Both must use this one implementation or the gradient
+    /// in the image and the gradient behind it meet at a visible seam.
+    static func drawBackground(palette: Palette, in bounds: CGRect, context: CGContext) {
 
         guard palette.canvasIsGradient else {
             context.setFillColor(palette.canvasTop)

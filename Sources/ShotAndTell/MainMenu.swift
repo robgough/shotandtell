@@ -68,6 +68,12 @@ enum MainMenu {
         let item = NSMenuItem()
         let menu = NSMenu(title: "Window")
 
+        // `performClose:` rather than `close`: it consults the window's delegate,
+        // which is what puts the "Discard this capture?" question in front of
+        // ⌘W as well as the red button. Without a Close item at all, ⌘W simply
+        // did nothing — there was no menu command for it to fire.
+        menu.addItem(withTitle: "Close", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
+        menu.addItem(.separator())
         menu.addItem(withTitle: "Minimise", action: #selector(NSWindow.performMiniaturize(_:)), keyEquivalent: "m")
         menu.addItem(withTitle: "Zoom", action: #selector(NSWindow.performZoom(_:)), keyEquivalent: "")
         menu.addItem(.separator())
