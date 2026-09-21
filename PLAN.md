@@ -16,7 +16,7 @@ Status: planning. Nothing built yet.
 | Composition | Screenshot inset on a background, **legend column on the right**. |
 | Editor | **Dedicated editor window**, live WYSIWYG — what you see *is* the export. |
 | Tools (v1) | Numbered pin, numbered arrow, numbered box, redaction rectangle. |
-| Export | **Composed PNG to clipboard** + **saved PNG to disk**. No history/library in v1. |
+| Export | **Composed PNG to clipboard** + **saved PNG to disk** + **Copy legend as markdown**. No history/library in v1. |
 | Capture modes | Region drag, window click, whole screen, timed (3/5/10s). |
 | Background | Neutral default + per-shot picker (neutral / gradients / solid / none). |
 | Legend header | **Editable title** you type. No app branding on the output. |
@@ -24,7 +24,8 @@ Status: planning. Nothing built yet.
 | Output size | **2x, long edge capped ~2400pt** so files stay paste-able. |
 | Pricing | **Free, no IAP.** No StoreKit code. |
 
-Still open: app icon, App Store name availability, bundle ID, marketing site.
+App Store name "Shot and tell" confirmed free. Still open: app icon, bundle ID,
+marketing site.
 
 ## Shape of the app
 
@@ -98,6 +99,13 @@ click → type without ever reaching for the mouse in between. Escape cancels, �
 applied by the compositor as opaque fill, so the censored pixels are never in the
 exported bytes at all. The original capture is never written to disk.
 
+It also renders the legend as **markdown text** (`## Title` + a numbered list), exposed
+as *Copy legend as markdown* (⇧⌘C) and included alongside the PNG on the pasteboard as a
+second representation, so a paste into a text field gets words rather than nothing. This
+matters more than it looks: text in the prompt is tokens the model reads directly,
+rather than pixels it has to OCR back out of the image. `Document -> String` lives in
+`ShotAndTellKit` next to the compositor, sharing the same numbering.
+
 **Settings** — hotkey recorder, default background, save folder, output size, whether
 window captures include shadow. `@AppStorage`-backed, one SwiftUI settings scene.
 
@@ -147,7 +155,8 @@ numbered box, redaction rectangle. Selection, dragging to reposition, resize han
 
 **4 — Composition polish + export.** Background picker, editable title, typography and
 spacing pass, portrait/landscape behaviour, 2x render with the width cap, clipboard +
-disk write, filename scheme, "Reveal in Finder".
+disk write, markdown legend (⇧⌘C and as a pasteboard text representation), filename
+scheme, "Reveal in Finder".
 *Done when:* the output is genuinely nice to look at, not merely correct.
 
 **5 — Settings, hotkey, first run.** Hotkey recorder, preferences, permission
@@ -157,9 +166,8 @@ onboarding, About.
 manifest, TestFlight, submit. `CHANGELOG.md` from the first release on, same
 user-language style as Dictator.
 
-**Later (not v1):** iPhone/iPad app over `ShotAndTellKit`; capture history; markdown
-legend on the clipboard as text as well as pixels; scrolling capture; annotation
-presets.
+**Later (not v1):** iPhone/iPad app over `ShotAndTellKit`; capture history; scrolling
+capture; annotation presets.
 
 ## Risks
 
@@ -172,5 +180,3 @@ presets.
 - **App Store review** occasionally takes against screen-capture apps. Mitigation: a
   clear purpose string, no network access at all (declare no entitlement for it), and a
   demo video with the submission.
-- **Name availability** — "Shot and tell" may collide on the Store. Worth checking
-  before the icon gets drawn.
