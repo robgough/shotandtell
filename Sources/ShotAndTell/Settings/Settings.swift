@@ -42,6 +42,7 @@ final class Settings {
         didSet { applyHotkey() }
     }
     var defaultBackground: BackgroundStyle { didSet { save() } }
+    var defaultMarkerColour: MarkerColour { didSet { save() } }
     var appearanceMode: AppearanceMode { didSet { save() } }
     var savesToDisk: Bool { didSet { save() } }
     /// Whether the legend text rides along on the clipboard beside the image.
@@ -81,6 +82,7 @@ final class Settings {
 
         hotkey = Self.decode(KeyCombo.self, from: defaults.data(forKey: Key.hotkey)) ?? .default
         defaultBackground = Self.decode(BackgroundStyle.self, from: defaults.data(forKey: Key.background)) ?? .neutral
+        defaultMarkerColour = Self.decode(MarkerColour.self, from: defaults.data(forKey: Key.markerColour)) ?? .default
         appearanceMode = AppearanceMode(rawValue: defaults.string(forKey: Key.appearanceMode) ?? "") ?? .system
         savesToDisk = defaults.bool(forKey: Key.savesToDisk)
         copiesLegendText = defaults.bool(forKey: Key.copiesLegendText)
@@ -165,6 +167,7 @@ final class Settings {
     private func save() {
         defaults.set(Self.encode(hotkey), forKey: Key.hotkey)
         defaults.set(Self.encode(defaultBackground), forKey: Key.background)
+        defaults.set(Self.encode(defaultMarkerColour), forKey: Key.markerColour)
         defaults.set(appearanceMode.rawValue, forKey: Key.appearanceMode)
         defaults.set(savesToDisk, forKey: Key.savesToDisk)
         defaults.set(copiesLegendText, forKey: Key.copiesLegendText)
@@ -185,6 +188,7 @@ final class Settings {
     private enum Key {
         static let hotkey = "hotkey"
         static let background = "defaultBackground"
+        static let markerColour = "defaultMarkerColour"
         static let appearanceMode = "appearanceMode"
         static let savesToDisk = "savesToDisk"
         static let copiesLegendText = "copiesLegendText"

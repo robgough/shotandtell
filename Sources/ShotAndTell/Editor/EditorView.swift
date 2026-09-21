@@ -20,7 +20,8 @@ struct EditorView: View {
     private var palette: Palette {
         Palette.resolve(
             background: document.composition.background,
-            appearance: document.composition.appearance
+            appearance: document.composition.appearance,
+            markerColour: document.composition.markerColour
         )
     }
 
@@ -37,8 +38,11 @@ struct EditorView: View {
         // background looks, it's set rarely, and the header is for the things
         // you reach for every time.
         .overlay(alignment: .bottomTrailing) {
-            backgroundMenu
-                .padding(16)
+            HStack(spacing: 8) {
+                markerMenu
+                backgroundMenu
+            }
+            .padding(16)
         }
         .inspector(isPresented: .constant(true)) {
             legend.inspectorColumnWidth(min: 260, ideal: 300, max: 420)
@@ -164,6 +168,56 @@ struct EditorView: View {
         .buttonStyle(.glassProminent)
         .keyboardShortcut(.return, modifiers: .command)
         .help(doneHelp)
+    }
+
+    /// Which colour the marks are drawn in.
+    ///
+    /// Next to the background picker because it's the same kind of decision, and
+    /// it matters for the same reason: marks in a colour the screenshot is
+    /// already full of are marks nobody can see.
+    private var markerMenu: some View {
+        Menu {
+            // A Picker rather than a row of Buttons: it marks the current choice
+            // with a tick by itself, which hand-built menu items don't.
+            Picker("Marker colour", selection: $document.composition.markerColour) {
+                ForEach(MarkerColour.presets, id: \.self) { colour in
+                    Text(colour.name).tag(colour)
+                }
+                if case .custom = document.composition.markerColour {
+                    Text("Custom").tag(document.composition.markerColour)
+                }
+            }
+            .pickerStyle(.inline)
+
+            Divider()
+
+            Button("Custom…") { showColourPanel() }
+        } label: {
+            Label {
+                Text("Marker")
+            } icon: {
+                Circle()
+                    .fill(Color(cgColor: palette.marker))
+                    .frame(width: 11, height: 11)
+            }
+        }
+        .menuStyle(.button)
+        .buttonStyle(.glass)
+        .labelStyle(.titleAndIcon)
+        .fixedSize()
+        .help("Colour of the numbers, arrows and boxes")
+    }
+
+    private func showColourPanel() {
+        let current = NSColor(cgColor: palette.marker) ?? .systemRed
+        MarkerColourPanel.shared.show(initial: current) { chosen in
+            guard let srgb = chosen.usingColorSpace(.sRGB) else { return }
+            document.composition.markerColour = .custom(
+                red: Double(srgb.redComponent),
+                green: Double(srgb.greenComponent),
+                blue: Double(srgb.blueComponent)
+            )
+        }
     }
 
     private var backgroundMenu: some View {

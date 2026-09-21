@@ -54,6 +54,9 @@ don't.
 - The framing never touches the screenshot's own pixels: the hairline sits
   outside the image and the corners blend into the background, so every captured
   pixel survives to the export exactly as taken.
+- Choose the marker colour per shot — eight presets or any colour from the
+  system picker — because red marks on a red screenshot can't be seen. The
+  number inside each marker switches to dark automatically on pale colours.
 - Choose a background per shot — neutral, one of four gradients, a flat tone, or
   none — in light or dark.
 - Saved filenames contain exactly one full stop, the one before "png".

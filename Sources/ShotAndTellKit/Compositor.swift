@@ -33,7 +33,11 @@ nonisolated enum Compositor {
         includeLegend: Bool = true,
         drawsBackground: Bool = true
     ) throws -> Output {
-        let palette = Palette.resolve(background: composition.background, appearance: composition.appearance)
+        let palette = Palette.resolve(
+            background: composition.background,
+            appearance: composition.appearance,
+            markerColour: composition.markerColour
+        )
         let layout = CompositionLayout.solve(composition, palette: palette, includeLegend: includeLegend)
 
         let pixelWidth = Int((layout.canvasSize.width * scale).rounded())

@@ -39,6 +39,16 @@ struct SettingsView: View {
                     }
                     Text("None").tag(BackgroundStyle.bare)
                 }
+                Picker("Marker colour", selection: $settings.defaultMarkerColour) {
+                    ForEach(MarkerColour.presets, id: \.self) { colour in
+                        Text(colour.name).tag(colour)
+                    }
+                    if case .custom = settings.defaultMarkerColour {
+                        // Keeps a custom colour chosen in the editor selectable
+                        // here rather than silently snapping back to a preset.
+                        Text("Custom").tag(settings.defaultMarkerColour)
+                    }
+                }
                 Picker("Light or dark", selection: $settings.appearanceMode) {
                     ForEach(Settings.AppearanceMode.allCases, id: \.self) { mode in
                         Text(mode.title).tag(mode)

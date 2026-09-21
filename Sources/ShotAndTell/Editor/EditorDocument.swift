@@ -43,7 +43,8 @@ final class EditorDocument {
             // field, and it's the thing people would type anyway.
             title: capture.sourceDescription ?? "",
             background: Settings.shared.defaultBackground,
-            appearance: Settings.shared.resolvedAppearance()
+            appearance: Settings.shared.resolvedAppearance(),
+            markerColour: Settings.shared.defaultMarkerColour
         )
 
         if composition.title.isEmpty {

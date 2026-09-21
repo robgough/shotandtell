@@ -57,7 +57,11 @@ final class CompositionCanvasView: NSView {
         guard let document else { return }
         let composition = document.composition
 
-        let palette = Palette.resolve(background: composition.background, appearance: composition.appearance)
+        let palette = Palette.resolve(
+            background: composition.background,
+            appearance: composition.appearance,
+            markerColour: composition.markerColour
+        )
         cachedPalette = palette
         // No legend on the canvas: the panel to the right is the legend, and
         // showing it twice just makes the screenshot smaller.

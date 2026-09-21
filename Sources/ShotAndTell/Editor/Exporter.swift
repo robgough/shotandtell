@@ -50,7 +50,11 @@ enum Exporter {
     @discardableResult
     static func export(_ composition: Composition, options: Options = Options()) async throws -> Result {
         let settings = Settings.shared
-        let palette = Palette.resolve(background: composition.background, appearance: composition.appearance)
+        let palette = Palette.resolve(
+            background: composition.background,
+            appearance: composition.appearance,
+            markerColour: composition.markerColour
+        )
         let layout = CompositionLayout.solve(composition, palette: palette)
         let scale = exportScale(for: layout.canvasSize, setting: settings.exportScale)
 

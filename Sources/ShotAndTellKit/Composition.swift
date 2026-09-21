@@ -14,6 +14,7 @@ nonisolated struct Composition: @unchecked Sendable {
     var title: String
     var background: BackgroundStyle
     var appearance: Appearance
+    var markerColour: MarkerColour
     var annotations: [Annotation]
 
     nonisolated enum Appearance: String, Codable, Sendable, CaseIterable {
@@ -25,12 +26,14 @@ nonisolated struct Composition: @unchecked Sendable {
         title: String = "",
         background: BackgroundStyle = .neutral,
         appearance: Appearance = .light,
+        markerColour: MarkerColour = .default,
         annotations: [Annotation] = []
     ) {
         self.capture = capture
         self.title = title
         self.background = background
         self.appearance = appearance
+        self.markerColour = markerColour
         self.annotations = annotations
     }
 
