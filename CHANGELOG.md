@@ -41,6 +41,9 @@ don't.
 - Reopen the last capture from the menu bar, marks and all, if you close it by
   mistake or think of something else to point at.
 - The menu bar can reveal the last saved screenshot in the Finder.
+- The framing never touches the screenshot's own pixels: the hairline sits
+  outside the image and the corners blend into the background, so every captured
+  pixel survives to the export exactly as taken.
 - Choose a background per shot — neutral, one of four gradients, a flat tone, or
   none — in light or dark.
 - Pressing Done copies the composed image to the clipboard, puts the legend on

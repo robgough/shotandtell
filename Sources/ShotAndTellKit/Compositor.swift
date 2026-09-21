@@ -132,7 +132,10 @@ nonisolated enum Compositor {
 
         // The shadow is cast by an opaque shape drawn first, not by the image
         // itself — a screenshot with transparent corners would otherwise cast a
-        // shadow through them.
+        // shadow through them. That shape is filled with the canvas colour
+        // rather than black, so where the rounded corners antialias the image
+        // against it the blend goes towards the background instead of towards a
+        // dark fringe.
         context.saveGState()
         context.setShadow(
             offset: CGSize(width: 0, height: -10),
@@ -140,7 +143,7 @@ nonisolated enum Compositor {
             color: CGColor(srgbRed: 0, green: 0, blue: 0, alpha: 0.20)
         )
         context.addPath(path)
-        context.setFillColor(CGColor(srgbRed: 0, green: 0, blue: 0, alpha: 1))
+        context.setFillColor(palette.canvasTop)
         context.fillPath()
         context.restoreGState()
 
@@ -150,7 +153,18 @@ nonisolated enum Compositor {
         context.draw(composition.capture.image, in: rect)
         context.restoreGState()
 
-        context.addPath(path)
+        // Stroked half a point outside the image, so the whole line sits in the
+        // margin. A 1pt stroke centred on the path would put half of itself over
+        // the outermost row of captured pixels and tint it — measurably: a flat
+        // grey capture came out at 141 down its edge instead of 128. Every pixel
+        // of the screenshot has to survive intact, because something is going to
+        // read it.
+        context.addPath(CGPath(
+            roundedRect: rect.insetBy(dx: -0.5, dy: -0.5),
+            cornerWidth: CompositionLayout.captureCornerRadius + 0.5,
+            cornerHeight: CompositionLayout.captureCornerRadius + 0.5,
+            transform: nil
+        ))
         context.setStrokeColor(palette.captureBorder)
         context.setLineWidth(1)
         context.strokePath()
