@@ -122,25 +122,49 @@ enum Exporter {
         let folder = pictures.appending(path: "Shot and Tell", directoryHint: .isDirectory)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
 
-        let url = folder.appending(path: filename(title: title))
+        let url = availableURL(in: folder, named: filename(title: title))
         try png.write(to: url, options: .atomic)
         return url
     }
 
+    /// The given name, or the next free "name 2", "name 3"…
+    ///
+    /// Needed because the timestamp is only accurate to the minute. Two captures
+    /// in the same minute is not a far-fetched thing to do, and an atomic write
+    /// to an existing path replaces it without a word — losing a screenshot the
+    /// user thought they had saved.
+    private static func availableURL(in folder: URL, named name: String) -> URL {
+        let base = (name as NSString).deletingPathExtension
+        let ext = (name as NSString).pathExtension
+
+        var candidate = folder.appending(path: name)
+        var counter = 2
+        while FileManager.default.fileExists(atPath: candidate.path(percentEncoded: false)) {
+            candidate = folder.appending(path: "\(base) \(counter).\(ext)")
+            counter += 1
+        }
+        return candidate
+    }
+
     /// "Homepage spacing 2026-09-21 at 22.31.45.png" — the title first so a
     /// folder of these is browsable, the timestamp second so nothing collides.
-    /// "Homepage spacing 2026-09-22 at 00-14-07.png" — the title first so a
-    /// folder of these is browsable, the timestamp second so nothing collides.
+    /// "Homepage spacing 2026-09-22 0014.png" — the title first so a folder of
+    /// these is browsable, the timestamp second to tell two apart.
     ///
-    /// Exactly one full stop in the whole name, the one before `png`. The system
-    /// screenshot convention separates the time with dots, but a name like
-    /// "… 23.53.25.png" gives anything that splits on the last dot a plausible
-    /// ".25" to mistake for an extension, and a title of its own can contain
-    /// dots too. Not worth the compatibility it buys.
+    /// No seconds: they're four more characters of noise in a name a person has
+    /// to read, and they were only ever there to avoid collisions, which
+    /// `availableURL` now handles properly. No separator inside the time either
+    /// — sitting directly after the date, four digits read as a clock without
+    /// one.
+    ///
+    /// And exactly one full stop in the whole name, the one before `png`. The
+    /// system screenshot convention separates the time with dots, but "…
+    /// 23.53.25.png" hands anything that splits on the last dot a plausible
+    /// ".25" to mistake for an extension.
     private static func filename(title: String) -> String {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_GB")
-        formatter.dateFormat = "yyyy-MM-dd 'at' HH-mm-ss"
+        formatter.dateFormat = "yyyy-MM-dd HHmm"
         let stamp = formatter.string(from: Date())
 
         let cleaned = sanitised(title)
