@@ -45,7 +45,10 @@ Two source folders, one target now, room for an iOS target later:
 - **`Sources/ShotAndTellKit/`** — platform-light core that an iOS app could reuse:
   the document model, the numbering rules, the compositor, background styles, PNG
   encoding. No `SCStream`, no `NSStatusItem`. Compiled straight into the target's
-  sources list (not a framework — no `public` churn), Dictator-style.
+  sources list (not a framework — no `public` churn), Dictator-style. Every
+  declaration in it is `nonisolated`, because the target's main-actor isolation
+  default is module-wide and would otherwise pin the compositor to the main
+  thread. Promote it to a real package when the iOS target arrives.
 - **`Sources/ShotAndTell/`** — the Mac app: app delegate, menubar, capture overlays,
   ScreenCaptureKit plumbing, editor window, settings, hotkey.
 
@@ -117,13 +120,25 @@ retrofitting:
 - **Screen recording** — ScreenCaptureKit works inside the sandbox, but needs the TCC
   *Screen & System Audio Recording* grant. Needs a first-run explainer and a graceful
   "open System Settings" path when denied. macOS re-prompts periodically; the app must
-  handle the permission vanishing mid-session.
+  handle the permission vanishing mid-session. (Verified: there is no screen-capture
+  entitlement to request, and the sandbox profile explicitly permits reaching
+  `com.apple.replayd`. The one entitlement that exists,
+  `com.apple.developer.persistent-content-capture`, only suppresses the periodic
+  re-prompt, is request-only, and is meant for VNC apps.)
+- **`SCContentSharingPicker`** is worth a look in phase 1 for the window and screen
+  modes: it's the system's own picker, and if it carries its own consent it could
+  make those two modes work without the grant at all. Region-drag needs our own
+  overlay and will always need it.
 - **Saving to ~/Pictures** — a sandboxed app has no free access to it. Use the
   `com.apple.security.assets.pictures.read-write` entitlement for the default
   `~/Pictures/Shot and tell/` folder; if the user picks a different folder, hold a
   security-scoped bookmark.
 - **Global hotkey** — `RegisterEventHotKey` (Carbon) works in the sandbox and needs no
-  Accessibility grant. `CGEventTap`/`NSEvent.addGlobalMonitor` do need it — avoid both.
+  Accessibility grant, and is still un-deprecated in the macOS 27 SDK.
+  `CGEventTap`/`NSEvent.addGlobalMonitor` do need it — avoid both. Two things for
+  phase 5: the obvious defaults (⇧⌘3/4/5/6) are all taken by the system screenshot
+  service, so pick something else; and registration can fail, so the recorder has to
+  notice and say so rather than silently binding nothing.
 - **Privacy manifest** (`PrivacyInfo.xcprivacy`) is required for submission.
 - **No Sparkle**, no update checks, no analytics. Review-clean, and less code.
 - Signing: Apple Distribution + Mac App Store provisioning profile via `.env`
@@ -159,11 +174,13 @@ disk write, markdown legend (⇧⌘C and as a pasteboard text representation), f
 scheme, "Reveal in Finder".
 *Done when:* the output is genuinely nice to look at, not merely correct.
 
-**5 — Settings, hotkey, first run.** Hotkey recorder, preferences, permission
-onboarding, About.
+**5 — Settings, hotkey, first run.** Hotkey recorder (surfacing registration
+failure), preferences, permission onboarding, About.
 
-**6 — Ship.** App icon, App Store Connect record, screenshots, description, privacy
-manifest, TestFlight, submit. `CHANGELOG.md` from the first release on, same
+**6 — Ship.** App icon (the archive is rejected without one), App Store Connect
+record, screenshots, description, a RELEASING.md covering the Mac App Store export
+path — which is new ground, Dictator has only ever shipped Developer ID —
+TestFlight, submit. `CHANGELOG.md` from the first release on, same
 user-language style as Dictator.
 
 **Later (not v1):** iPhone/iPad app over `ShotAndTellKit`; capture history; scrolling

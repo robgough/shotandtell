@@ -15,11 +15,15 @@ if [ -f .env ]; then
     set +a
 fi
 
-if [ -z "${SHOTANDTELL_TEAM_ID:-}" ]; then
-    echo "⚠️  SHOTANDTELL_TEAM_ID not set — the build will use ad-hoc signing." >&2
-    echo "    It still builds and runs, but macOS re-prompts for Screen Recording" >&2
-    echo "    after every clean build, because TCC keys that grant to the signature." >&2
-    echo "    Add SHOTANDTELL_TEAM_ID=YOUR10CHARID to a .env file here to fix it." >&2
+# The *identity* is what decides whether the build is really signed — a team ID
+# on its own still leaves CODE_SIGN_IDENTITY empty, and therefore ad-hoc. Warn
+# on the variable that actually matters, not the one that looks like it does.
+if [ -z "${SHOTANDTELL_CODE_SIGN_IDENTITY:-}" ]; then
+    echo "⚠️  SHOTANDTELL_CODE_SIGN_IDENTITY not set — the build will use ad-hoc signing." >&2
+    echo "    It still builds and runs sandboxed, but the signature changes every" >&2
+    echo "    build, so macOS re-prompts for Screen Recording each time." >&2
+    echo "    Set SHOTANDTELL_TEAM_ID *and* SHOTANDTELL_CODE_SIGN_IDENTITY in .env" >&2
+    echo "    to fix it — see .env.example." >&2
     echo "" >&2
 fi
 

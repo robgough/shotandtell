@@ -39,11 +39,12 @@ targets:
       - path: Sources/ShotAndTellKit
     postBuildScripts:
       - script: |
-          # Install a stable copy of the built .app at ~/Applications. macOS TCC
-          # keys the Screen Recording grant by signed identity AND launch path,
-          # and the DerivedData path changes after every Clean Build Folder — so
-          # without this, every clean build re-prompts for screen recording.
-          # Launch ~/Applications/Shot and tell.app instead and the grant sticks.
+          # Install a copy of the built .app at ~/Applications, as a stable thing
+          # to launch. macOS TCC keys the Screen Recording grant to the bundle ID
+          # and the code-signing requirement — not the path — so what actually
+          # keeps the grant alive across rebuilds is a real certificate (see
+          # CODE_SIGN_IDENTITY below), not this copy. This just saves digging
+          # through DerivedData to run the thing.
           set -e
           mkdir -p "$HOME/Applications"
           DEST="$HOME/Applications/${PRODUCT_NAME}.app"
@@ -93,6 +94,9 @@ targets:
         # principal class when this key is absent, but being explicit saves the
         # next person working out why there's no nib.
         NSPrincipalClass: NSApplication
+        # Required by App Store ingestion — an archive without it is rejected
+        # with ITMS-90242.
+        LSApplicationCategoryType: public.app-category.productivity
         # Kept as $() refs so a CI `xcodebuild MARKETING_VERSION=...` override
         # actually reaches the shipped Info.plist instead of losing to a literal.
         CFBundleShortVersionString: "$(MARKETING_VERSION)"
@@ -115,7 +119,12 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: net.robgough.ShotAndTell
-        PRODUCT_NAME: ShotAndTell
+        # "Shot and tell.app" in Finder, Launchpad and the App Store — the name
+        # people actually see. PRODUCT_MODULE_NAME keeps the Swift module a
+        # valid identifier. Set now rather than later because changing it moves
+        # the ~/Applications path and the archive name.
+        PRODUCT_NAME: "Shot and tell"
+        PRODUCT_MODULE_NAME: ShotAndTell
         ARCHS: arm64
         MARKETING_VERSION: "0.1.0"
         CURRENT_PROJECT_VERSION: "1"
@@ -129,8 +138,9 @@ targets:
         SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
         SWIFT_APPROACHABLE_CONCURRENCY: YES
         ENABLE_HARDENED_RUNTIME: YES
-        # macOS TCC keys the Screen Recording grant by *signed identity*, so an
-        # unstable signature (ad-hoc) makes the OS forget you on every rebuild.
+        # macOS TCC keys the Screen Recording grant to the bundle ID and the
+        # *code-signing requirement*, so an unstable signature (ad-hoc, which
+        # changes every build) makes the OS forget the grant each time.
         # Three optional env vars pin it to a real certificate:
         #   - SHOTANDTELL_TEAM_ID            : your 10-char Apple team ID
         #   - SHOTANDTELL_CODE_SIGN_IDENTITY : SHA-1 of the cert, from

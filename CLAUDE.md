@@ -41,7 +41,9 @@ DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild \
   -derivedDataPath .derivedData build
 ```
 
-A post-build phase installs a signed copy to `~/Applications/ShotAndTell.app`.
+A post-build phase installs a copy to `~/Applications/Shot and tell.app`, purely
+as a stable thing to launch. The bundle is `Shot and tell.app` (`PRODUCT_NAME`)
+while the Swift module is `ShotAndTell` (`PRODUCT_MODULE_NAME`).
 
 There is no test target yet and no lint config.
 
@@ -60,13 +62,16 @@ persisted by default; `info` and `debug` need `--info` / `--debug`.
 
 ### Signing & macOS TCC
 
-macOS keys the Screen Recording grant to the app's *signed identity* and launch
-path. Ad-hoc signatures change on every build, so grants are revoked constantly.
-Three optional env vars in `.env` pin the signature to a real certificate:
-`SHOTANDTELL_TEAM_ID`, `SHOTANDTELL_CODE_SIGN_IDENTITY`,
-`SHOTANDTELL_CODE_SIGN_STYLE`. Unset, the build falls back to **ad-hoc** signing
-(`./gen` defaults the identity to `-` rather than empty — an unsigned binary can't
-carry entitlements at all, which would silently disable the sandbox).
+macOS keys the Screen Recording grant to the bundle ID and the app's
+*code-signing requirement* — not its path. Ad-hoc signatures change on every
+build, so the grant is revoked every time. Set both `SHOTANDTELL_TEAM_ID` and
+`SHOTANDTELL_CODE_SIGN_IDENTITY` in `.env` to pin it to a real certificate;
+setting only the team ID still leaves the identity empty, which is still ad-hoc,
+which is why `./gen` warns on the *identity*.
+
+Unset, the build falls back to **ad-hoc** signing (`./gen` defaults the identity
+to `-` rather than empty — an unsigned binary can't carry entitlements at all,
+which would silently disable the sandbox).
 
 Prefer the certificate releases are signed with, so local and released builds
 share a grant. If one goes stale:
@@ -92,17 +97,33 @@ almost entirely UI, so main-actor is the default and the *exceptions* — the
 ScreenCaptureKit grab, PNG encoding — are what have to be marked. Don't sprinkle
 `@MainActor`; it's already implied.
 
+**Every declaration in `Sources/ShotAndTellKit/` must be marked `nonisolated`.**
+The isolation default is module-wide, and Kit is compiled into the same module,
+so without it the document model, the compositor and even their synthesised
+`Codable` / `CaseIterable` conformances become main-actor-isolated — which is
+precisely backwards, because composing and encoding the image is the work that
+belongs off the main thread. It fails at the point of *use*, not the point of
+declaration, so it's cheap now and a retrofit across every Kit type later.
+
+If an iOS target ever arrives, promote Kit to a local Swift package with its own
+`SWIFT_DEFAULT_ACTOR_ISOLATION = nonisolated`. That also turns "nothing here may
+import AppKit" from a comment into a compile error. Not done yet because it means
+`public` on everything while the model is still changing shape daily.
+
 ### Entry point
 
 There is no `MainMenu.xib`. `ShotAndTellMain.swift` creates `NSApplication`, sets
 the delegate and calls `run()` by hand, because:
 
-- `@main` on an `NSApplicationDelegate` routes through `NSApplicationMain`, which
-  expects to find the delegate wired up in a nib. Without one the app launches
-  perfectly happily and then never calls a single delegate method — no status
-  item, no Dock-click capture, and no error explaining why.
-- A top-level `main.swift` isn't an option either: top-level code in an AppKit
-  target makes the linker try to link `SwiftUICore` directly, which it refuses.
+`@main` on an `NSApplicationDelegate` uses AppKit's default `main()`, which just
+calls `NSApplicationMain` and never instantiates the delegate — it expects to find
+one connected in a MainMenu nib. Without a nib the app launches perfectly happily
+and then never calls a single delegate method: no status item, no Dock-click
+capture, and no error explaining why.
+
+A top-level `main.swift` works equally well and is a fine alternative; the `@main`
+enum is used only because it gives the weakly-referenced delegate somewhere
+obvious to be owned.
 
 The menu bar (`MainMenu.swift`) is built in code for the same reason.
 

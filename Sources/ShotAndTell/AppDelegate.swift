@@ -8,7 +8,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Built by hand rather than loaded from a nib: with `@main` on the
         // delegate there's no MainMenu.xib, and an app with a Dock icon and no
         // menu bar of its own looks broken (and can't even be quit with ⌘Q).
-        NSApp.mainMenu = MainMenu.build()
+        let (mainMenu, windowsMenu) = MainMenu.build()
+        NSApp.mainMenu = mainMenu
+        NSApp.windowsMenu = windowsMenu
         menuBar = MenuBarController(coordinator: coordinator)
 
         Log.app.notice("Shot and tell launched")

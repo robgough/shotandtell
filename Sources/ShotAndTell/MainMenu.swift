@@ -7,12 +7,19 @@ import AppKit
 /// is full of text fields and ⌘Z / ⌘C / ⌘V have to work in them; Window because
 /// the editor is a real window and people expect to be able to minimise it.
 enum MainMenu {
-    static func build() -> NSMenu {
+    /// Returns the menu bar and the Window menu within it. The caller hands the
+    /// Window menu to `NSApp.windowsMenu` so AppKit can manage the window list
+    /// itself — returned rather than assigned here, so building a menu has no
+    /// side effects on the running application.
+    static func build() -> (main: NSMenu, windows: NSMenu) {
         let main = NSMenu()
         main.addItem(appMenuItem())
         main.addItem(editMenuItem())
-        main.addItem(windowMenuItem())
-        return main
+
+        let window = windowMenuItem()
+        main.addItem(window)
+
+        return (main, window.submenu!)
     }
 
     private static func appMenuItem() -> NSMenuItem {
@@ -68,8 +75,6 @@ enum MainMenu {
         menu.addItem(withTitle: "Bring All to Front", action: #selector(NSApplication.arrangeInFront(_:)), keyEquivalent: "")
 
         item.submenu = menu
-        // Handing AppKit the Window menu lets it manage the window list itself.
-        NSApp.windowsMenu = menu
         return item
     }
 }
