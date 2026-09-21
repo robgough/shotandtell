@@ -98,6 +98,22 @@ final class EditorDocument {
         }
     }
 
+    /// Swaps a numbered mark with its neighbour in the legend.
+    ///
+    /// Only numbered annotations take part, so redactions keep their place in
+    /// the array while the numbering around them shuffles. Goes through
+    /// `mutate`, so it renumbers the canvas and the legend together and lands on
+    /// the undo stack like every other structural change.
+    func moveNumbered(_ id: UUID, by offset: Int) {
+        mutate("Reorder Marks") { annotations in
+            let numbered = annotations.indices.filter { annotations[$0].isNumbered }
+            guard let position = numbered.firstIndex(where: { annotations[$0].id == id }),
+                  numbered.indices.contains(position + offset)
+            else { return }
+            annotations.swapAt(numbered[position], numbered[position + offset])
+        }
+    }
+
     /// Used by the canvas's resize handles.
     func setKind(_ kind: Annotation.Kind, for id: UUID) {
         mutate("Resize Mark", coalescing: true) { annotations in

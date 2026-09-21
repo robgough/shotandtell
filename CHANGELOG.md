@@ -32,6 +32,9 @@ don't.
   them, so you can box or point at something right on an edge.
 - Placing a mark returns you to Select, so the next click picks something up
   rather than making another one.
+- Renumber marks with ⌥⌘↑ and ⌥⌘↓, or from the menu on a number.
+- Clicking into a description highlights its mark on the screenshot, and
+  selecting a mark scrolls its description into view.
 - If Apple Intelligence is available, the title is suggested by the on-device
   model from the screenshot itself. Nothing is sent anywhere.
 - ⇧⌘C copies just the legend as text. The image alone goes on the clipboard

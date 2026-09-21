@@ -51,6 +51,15 @@ struct EditorView: View {
                 finishMenu
             }
         }
+        // Selection follows focus. Clicking *into* a description never reaches the
+        // row's tap gesture — the text field swallows the mouse-down — so
+        // without this the dashed ring on the canvas only tracked rows you
+        // clicked the padding of. Never the reverse: focus must not follow
+        // selection, or clicking a mark on the canvas would steal the keyboard
+        // and the tool shortcuts would stop working.
+        .onChange(of: focusedEntry) { _, id in
+            if let id { document.selection = id }
+        }
         .onChange(of: document.pendingFocus) { _, id in
             guard let id else { return }
             // A cycle later, so the row exists before focus is asked for.
@@ -198,87 +207,81 @@ struct EditorView: View {
     // MARK: - Legend
 
     private var legend: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 14) {
-                HStack(spacing: 8) {
-                    TextField("Title", text: $document.composition.title, prompt: Text("Title"))
-                        .textFieldStyle(.plain)
-                        .font(.title3.weight(.semibold))
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 8) {
+                        TextField("Title", text: $document.composition.title, prompt: Text("Title"))
+                            .textFieldStyle(.plain)
+                            .font(.title3.weight(.semibold))
+                            // The first field you land in should behave like the
+                            // rest of them.
+                            .onKeyPress(.escape) {
+                                releaseFocus()
+                                return .handled
+                            }
+                            .onKeyPress(.return, phases: .down) { press in
+                                guard press.modifiers.isEmpty else { return .ignored }
+                                releaseFocus()
+                                return .handled
+                            }
 
-                    if document.isSuggestingTitle {
-                        ProgressView()
-                            .controlSize(.small)
-                            .help("Suggesting a title on-device")
+                        if document.isSuggestingTitle {
+                            ProgressView()
+                                .controlSize(.small)
+                                .transition(.opacity)
+                                .help("Suggesting a title on-device")
+                        }
+                    }
+                    .padding(.horizontal, 8)
+                    .animation(.default, value: document.isSuggestingTitle)
+
+                    Divider()
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 6)
+
+                    if document.composition.numbered.isEmpty {
+                        // One line. The tools carry their own shortcuts and their
+                        // own tooltips; a paragraph explaining the focus model
+                        // here reads as an apology for it.
+                        Text("Click the screenshot to add a mark.")
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal, 8)
+                    }
+
+                    let entries = document.composition.numbered
+                    ForEach(entries, id: \.annotation.id) { number, annotation in
+                        LegendEntryRow(
+                            document: document,
+                            number: number,
+                            total: entries.count,
+                            annotation: annotation,
+                            markerColour: Color(cgColor: palette.marker),
+                            focus: $focusedEntry,
+                            onReleaseFocus: releaseFocus
+                        )
+                        .id(annotation.id)
+                    }
+
+                    if !document.composition.redactions.isEmpty {
+                        redactionSummary
+                            .padding(.horizontal, 8)
                     }
                 }
-
-                Divider()
-
-                if document.composition.numbered.isEmpty {
-                    // One line. The tools carry their own shortcuts and their own
-                    // tooltips; a paragraph explaining the focus model here reads
-                    // as an apology for it.
-                    Text("Click the screenshot to add a mark.")
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
-                        .padding(.top, 2)
-                }
-
-                ForEach(document.composition.numbered, id: \.annotation.id) { number, annotation in
-                    entryRow(number: number, annotation: annotation)
-                }
-
-                if !document.composition.redactions.isEmpty {
-                    redactionSummary
+                // Rows carry their own 8pt horizontal padding, so everything
+                // lines up at 16 while a row's tint bleeds into the gutter —
+                // which is how a Mac sidebar behaves.
+                .padding(.vertical, 16)
+                .padding(.horizontal, 8)
+            }
+            .onChange(of: document.selection) { _, id in
+                guard let id else { return }
+                withAnimation(.snappy(duration: 0.2)) {
+                    proxy.scrollTo(id, anchor: .center)
                 }
             }
-            .padding(16)
         }
-    }
-
-    private func entryRow(number: Int, annotation: Annotation) -> some View {
-        HStack(alignment: .top, spacing: 10) {
-            Text("\(number)")
-                .font(.caption.weight(.bold))
-                .foregroundStyle(.white)
-                .frame(width: 20, height: 20)
-                .background(Color(cgColor: palette.marker), in: .circle)
-
-            TextField("Describe this", text: document.binding(for: annotation.id), axis: .vertical)
-                .textFieldStyle(.plain)
-                .lineLimit(1...6)
-                .focused($focusedEntry, equals: annotation.id)
-                // Escape and Return both hand focus back to the canvas, where
-                // the single-key tool shortcuts live. Without somewhere to go,
-                // the only way out of a description is the mouse — and then the
-                // shortcuts may as well not exist.
-                .onKeyPress(.escape) {
-                    releaseFocus()
-                    return .handled
-                }
-                .onKeyPress(.return, phases: .down) { press in
-                    // ⇧↩ and ⌥↩ still put a line break in a long description.
-                    guard press.modifiers.isEmpty else { return .ignored }
-                    releaseFocus()
-                    return .handled
-                }
-
-            Button {
-                document.remove(annotation.id)
-            } label: {
-                Image(systemName: "xmark.circle.fill")
-                    .foregroundStyle(.tertiary)
-            }
-            .buttonStyle(.plain)
-            .help("Remove this mark")
-        }
-        .padding(8)
-        .background(
-            document.selection == annotation.id ? Color.accentColor.opacity(0.12) : .clear,
-            in: .rect(cornerRadius: 6)
-        )
-        .contentShape(.rect)
-        .onTapGesture { document.selection = annotation.id }
     }
 
     private var redactionSummary: some View {
@@ -293,6 +296,9 @@ struct EditorView: View {
                 .foregroundStyle(.secondary)
             Spacer()
         }
+        // The same height as a badge, so the swatch sits on the line an entry
+        // would — it's the panel's version of the export's redaction key.
+        .frame(height: 22)
         .padding(.top, 4)
     }
 
