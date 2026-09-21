@@ -212,6 +212,12 @@ struct EditorView: View {
         }
     }
 
+    /// Hands the keyboard back to the canvas so the tool keys work again.
+    private func releaseFocus() {
+        focusedEntry = nil
+        document.focusCanvas()
+    }
+
     private var doneHelp: String {
         Settings.shared.savesToDisk
             ? "Copies the finished image, saves a PNG to \(Settings.shared.saveFolderDisplayName), and closes (⌘↩)"
@@ -242,12 +248,18 @@ struct EditorView: View {
                 .textFieldStyle(.plain)
                 .lineLimit(1...6)
                 .focused($focusedEntry, equals: annotation.id)
-                // Escape hands focus back to the canvas, where the single-key
-                // tool shortcuts live. Without somewhere to go, the only way out
-                // of a description is the mouse.
+                // Escape and Return both hand focus back to the canvas, where
+                // the single-key tool shortcuts live. Without somewhere to go,
+                // the only way out of a description is the mouse — and then the
+                // shortcuts may as well not exist.
                 .onKeyPress(.escape) {
-                    focusedEntry = nil
-                    document.focusCanvas()
+                    releaseFocus()
+                    return .handled
+                }
+                .onKeyPress(.return, phases: .down) { press in
+                    // ⇧↩ and ⌥↩ still put a line break in a long description.
+                    guard press.modifiers.isEmpty else { return .ignored }
+                    releaseFocus()
                     return .handled
                 }
 
