@@ -26,7 +26,11 @@ enum EditorTool: String, CaseIterable, Identifiable, Sendable {
         case .pin: "1.circle.fill"
         case .arrow: "arrow.up.right"
         case .box: "rectangle"
-        case .redact: "rectangle.fill.on.rectangle.fill"
+        // Not a filled rectangle, however literal that is: beside the box
+        // tool's outlined one it becomes spot-the-difference at toolbar size.
+        // A crossed-out eye says what the tool is *for* rather than what it
+        // draws.
+        case .redact: "eye.slash"
         }
     }
 
