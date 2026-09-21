@@ -13,6 +13,7 @@ struct EditorView: View {
     let onCancel: () -> Void
 
     @FocusState private var focusedEntry: UUID?
+    @Namespace private var toolSelection
 
     var body: some View {
         VStack(spacing: 0) {
@@ -45,15 +46,7 @@ struct EditorView: View {
 
     private var toolbar: some View {
         HStack(spacing: 10) {
-            // Icons rather than words, each carrying its own key. A toolbar that
-            // shows you the shortcut is how you stop needing the toolbar.
-            GlassEffectContainer(spacing: 4) {
-                HStack(spacing: 4) {
-                    ForEach(EditorTool.allCases) { tool in
-                        toolButton(tool)
-                    }
-                }
-            }
+            toolSelector
 
             Spacer()
 
@@ -98,28 +91,58 @@ struct EditorView: View {
         .background(.bar)
     }
 
-    @ViewBuilder
-    private func toolButton(_ tool: EditorTool) -> some View {
-        let key = String(tool.shortcut).uppercased()
-        let label = HStack(spacing: 5) {
-            Image(systemName: tool.symbol)
-                .imageScale(.medium)
-                .frame(width: 16)
-            Text(key)
-                .font(.system(size: 10, weight: .semibold, design: .rounded))
-                .opacity(0.6)
+    /// One control that happens to have five parts, not five controls.
+    ///
+    /// Built by hand rather than as a segmented `Picker` because the segments
+    /// carry their keyboard shortcut next to the icon, and a segmented picker
+    /// renders only an icon *or* a label. The glass is on the container, so the
+    /// whole thing reads as a single selector; the selected segment is a pill
+    /// that slides between them.
+    private var toolSelector: some View {
+        HStack(spacing: 2) {
+            ForEach(EditorTool.allCases) { tool in
+                toolSegment(tool)
+            }
         }
-        .padding(.vertical, 1)
+        .padding(3)
+        .glassEffect(in: .capsule)
+        // Without this the toolbar squeezes the segments to fit everything else
+        // in, and the shortcut letters are the first thing to get truncated
+        // away — which is the whole reason they're there.
+        .fixedSize()
+        .animation(.snappy(duration: 0.18), value: document.tool)
+    }
 
-        if document.tool == tool {
-            Button(action: { document.tool = tool }) { label }
-                .buttonStyle(.glassProminent)
-                .help("\(tool.title) — press \(key)")
-        } else {
-            Button(action: { document.tool = tool }) { label }
-                .buttonStyle(.glass)
-                .help("\(tool.title) — press \(key)")
+    private func toolSegment(_ tool: EditorTool) -> some View {
+        let key = String(tool.shortcut).uppercased()
+        let isSelected = document.tool == tool
+
+        return Button {
+            document.tool = tool
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: tool.symbol)
+                    .imageScale(.small)
+                    .frame(width: 15)
+                Text(key)
+                    .font(.system(size: 10, weight: .semibold, design: .rounded))
+                    .opacity(isSelected ? 0.85 : 0.5)
+                    .fixedSize()
+            }
+            .padding(.horizontal, 9)
+            .padding(.vertical, 5)
+            .foregroundStyle(isSelected ? AnyShapeStyle(.white) : AnyShapeStyle(.primary))
+            .background {
+                if isSelected {
+                    Capsule()
+                        .fill(Color.accentColor)
+                        .matchedGeometryEffect(id: "selectedTool", in: toolSelection)
+                }
+            }
+            .contentShape(.capsule)
         }
+        .buttonStyle(.plain)
+        .help("\(tool.title) — press \(key)")
     }
 
     private var backgroundMenu: some View {
