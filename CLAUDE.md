@@ -4,12 +4,12 @@ Guidance for Claude Code (claude.ai/code) working in this repository.
 
 ## What this is
 
-Shot and Tell is a macOS screenshot tool for talking to AI about pictures. You
-capture a region, window or screen; you point at things with numbered markers and
-describe them; you censor what shouldn't be seen. The export is a single image —
-the capture on a background with a numbered legend beside it — plus the same
-legend as markdown text, so "the heading in ① is too large" means something to a
-model that can only see pixels.
+Shot and Tell is a macOS screenshot tool for showing someone exactly what you
+mean. You capture a region, window or screen; you mark things with numbered
+markers and describe them; you censor what shouldn't be seen. The export is a
+single image — the capture on a background with a numbered legend beside it —
+plus the same legend as markdown text, so "the heading in ① is too large" is
+understood the first time, by an AI agent or by a colleague.
 
 Menubar app **and** a Dock icon. macOS 26+, Apple Silicon, Mac App Store, free.
 

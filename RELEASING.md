@@ -100,8 +100,8 @@ archive's own signature is throwaway.
 
 Screen-capture apps get looked at. Things that help:
 
-- The purpose is obvious from the screenshots and description — point at things
-  in a screenshot and describe them.
+- The purpose is obvious from the screenshots and description — mark things on a
+  screenshot and describe them.
 - **No network entitlement at all.** Say so in the review notes; it's the
   strongest possible answer to "where do the screenshots go".
 - Include a short demo video with the submission. Reviewers can't grant Screen

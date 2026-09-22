@@ -1,9 +1,9 @@
 # Shot and Tell — build plan
 
-A macOS screenshot tool for talking to AI about pictures. You capture, you point at
-things with numbered markers and describe them, and you get back a single image with
-the shot on a background and a numbered legend beside it — so "the heading in ① is too
-big" is unambiguous to a model that can only see pixels.
+A macOS screenshot tool for showing someone exactly what you mean. You capture, you
+mark things with numbered markers and describe them, and you get back a single image
+with the shot on a background and a numbered legend beside it — so "the heading in ①
+is too big" is understood the first time, by an AI agent or by a colleague.
 
 Status: **all six phases built**. The app captures, marks up, composes and
 exports; it is signed, sandboxed and App Store ready but not yet submitted.

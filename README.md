@@ -1,6 +1,6 @@
 # Shot and Tell
 
-A macOS screenshot tool for talking to AI about pictures.
+A macOS screenshot tool for showing someone exactly what you mean.
 
 Capture a region, a window or a screen; mark things with numbered markers and describe
 them; censor what shouldn't be seen. You get back one image: the screenshot on a
