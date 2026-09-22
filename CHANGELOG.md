@@ -13,6 +13,8 @@ don't.
 - A box, arrow or redaction is drawn in its real colour and weight while you
   drag it out, with the number it's about to get, instead of a thin blue outline.
 - Marks carry a soft shadow, so they sit visibly on top of busy screenshots.
+- Arrows taper from a fine tail to a swept, notched head, with an outline so
+  they stay visible when they cross something the same colour.
 - Dark compositions use the same vivid marker colours as light ones, rather than
   washed-out pastels, and a badge's ring always matches its number.
 - The marker colour and Background buttons stay readable whatever the canvas

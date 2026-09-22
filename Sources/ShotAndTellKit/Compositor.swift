@@ -318,44 +318,68 @@ nonisolated enum Compositor {
         )
     }
 
+    /// A tapered arrow: a fine tail that swells towards a swept, notched head,
+    /// drawn as one filled shape with an outline in the badge ring's colour.
+    ///
+    /// A constant-width line with a triangle on the end reads as a diagram
+    /// connector, and on a busy screenshot it's easily taken for part of the UI.
+    /// The taper gives it direction before you reach the head, and the outline
+    /// keeps it legible when it crosses something of its own colour — the same
+    /// job the ring does for the badge.
+    ///
+    /// The head grows with the arrow, within limits, so a short arrow isn't all
+    /// head and a long one doesn't end in a pinhead.
     private static func drawArrow(from: CGPoint, to: CGPoint, palette: Palette, in context: CGContext) {
         let dx = to.x - from.x
         let dy = to.y - from.y
-        let length = (dx * dx + dy * dy).squareRoot()
-        guard length > 1 else { return }
+        let distance = (dx * dx + dy * dy).squareRoot()
 
-        let unit = CGVector(dx: dx / length, dy: dy / length)
-        // Start the shaft outside the number badge rather than under it.
-        let start = CGPoint(
-            x: from.x + unit.dx * (CompositionLayout.markerDiameter / 2 + 3),
-            y: from.y + unit.dy * (CompositionLayout.markerDiameter / 2 + 3)
-        )
+        // Start the tail just outside the number badge rather than under it.
+        let inset = CompositionLayout.markerDiameter / 2 + 3
+        let length = distance - inset
+        guard length > 12 else { return }
 
-        let headLength: CGFloat = 13
-        let headWidth: CGFloat = 11
-        guard length > CompositionLayout.markerDiameter / 2 + headLength else { return }
+        let headLength = min(max(length * 0.26, 15), 24)
+        let headHalfWidth = headLength * 0.6
+        // The barbs sweep back past the point where the shaft joins the head,
+        // which is what gives the head its notch.
+        let neck = length - headLength * 0.7
+        let barb = length - headLength
+        let tailHalfWidth: CGFloat = 1.4
+        let neckHalfWidth = min(max(headLength * 0.17, 2.6), 3.8)
 
-        let shaftEnd = CGPoint(x: to.x - unit.dx * headLength, y: to.y - unit.dy * headLength)
+        // Built pointing along +x from the origin, then turned and moved into
+        // place, which keeps the geometry readable.
+        let path = CGMutablePath()
+        path.move(to: CGPoint(x: 0, y: tailHalfWidth))
+        path.addLine(to: CGPoint(x: neck, y: neckHalfWidth))
+        path.addLine(to: CGPoint(x: barb, y: headHalfWidth))
+        path.addLine(to: CGPoint(x: length, y: 0))
+        path.addLine(to: CGPoint(x: barb, y: -headHalfWidth))
+        path.addLine(to: CGPoint(x: neck, y: -neckHalfWidth))
+        path.addLine(to: CGPoint(x: 0, y: -tailHalfWidth))
+        // A round tail rather than a square cut.
+        path.addArc(center: .zero, radius: tailHalfWidth,
+                    startAngle: -.pi / 2, endAngle: .pi / 2, clockwise: true)
+        path.closeSubpath()
 
-        context.setStrokeColor(palette.marker)
+        let angle = atan2(dy, dx)
+        let origin = CGPoint(x: from.x + dx / distance * inset, y: from.y + dy / distance * inset)
+        var transform = CGAffineTransform(translationX: origin.x, y: origin.y).rotated(by: angle)
+        guard let placed = path.copy(using: &transform) else { return }
+
+        // Outline first, then the fill over its inner half, so only the outer
+        // half of the stroke shows.
+        context.saveGState()
+        context.addPath(placed)
+        context.setStrokeColor(palette.markerInk.copy(alpha: 0.95) ?? palette.markerInk)
         context.setLineWidth(3)
-        context.setLineCap(.round)
-        context.move(to: start)
-        context.addLine(to: shaftEnd)
+        context.setLineJoin(.round)
         context.strokePath()
+        context.restoreGState()
 
-        let perpendicular = CGVector(dx: -unit.dy, dy: unit.dx)
+        context.addPath(placed)
         context.setFillColor(palette.marker)
-        context.move(to: to)
-        context.addLine(to: CGPoint(
-            x: shaftEnd.x + perpendicular.dx * headWidth / 2,
-            y: shaftEnd.y + perpendicular.dy * headWidth / 2
-        ))
-        context.addLine(to: CGPoint(
-            x: shaftEnd.x - perpendicular.dx * headWidth / 2,
-            y: shaftEnd.y - perpendicular.dy * headWidth / 2
-        ))
-        context.closePath()
         context.fillPath()
     }
 
