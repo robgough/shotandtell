@@ -283,13 +283,34 @@ final class CompositionCanvasView: NSView {
     // MARK: - Mouse
 
     override func resetCursorRects() {
-        let cursor: NSCursor = (document?.tool ?? .select) == .select ? .arrow : .crosshair
-        addCursorRect(bounds, cursor: cursor)
+        let tool = document?.tool ?? .select
+        // Crosshair only where a click would actually draw something. Over the
+        // empty canvas it's an open hand, because that's where dragging the
+        // window happens.
+        if tool == .select {
+            addCursorRect(bounds, cursor: .arrow)
+            return
+        }
+        addCursorRect(bounds, cursor: .openHand)
+        if !fitRect.isEmpty {
+            addCursorRect(fitRect, cursor: .crosshair)
+        }
     }
 
     override func mouseDown(with event: NSEvent) {
         guard let document else { return }
         let point = convert(event.locationInWindow, from: nil)
+
+        // Empty canvas drags the window, the way empty space in any Mac window
+        // does. The canvas fills the whole content area and runs under the
+        // toolbar, so without this there is almost nowhere left to pick the
+        // window up by — the title bar is transparent and the content owns it.
+        if shouldDragWindow(from: point, tool: document.tool) {
+            document.selection = nil
+            needsDisplay = true
+            window?.performDrag(with: event)
+            return
+        }
 
         switch document.tool {
         case .select:
@@ -424,6 +445,19 @@ final class CompositionCanvasView: NSView {
             break
         }
         invalidate()
+    }
+
+    /// Whether a click at this point should move the window instead of marking
+    /// the screenshot.
+    ///
+    /// Outside the composition entirely: always, whatever the tool — that area
+    /// is nothing but background. Inside it: only with Select, and only where
+    /// there's no mark to pick up. A drawing tool needs the margin, because a
+    /// box around something in a corner starts out there.
+    private func shouldDragWindow(from point: CGPoint, tool: EditorTool) -> Bool {
+        guard fitRect.contains(point) else { return true }
+        guard tool == .select else { return false }
+        return topmostAnnotation(at: point) == nil
     }
 
     private func topmostAnnotation(at viewPoint: CGPoint) -> Annotation? {

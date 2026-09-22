@@ -44,6 +44,8 @@ don't.
   button now says what it does — Copy & Close.
 - Reopen the last capture from the menu bar, marks and all, if you close it by
   mistake or think of something else to point at.
+- Drag the editor window by its empty background, or by the screenshot itself
+  when Select is the active tool.
 - The editor puts the tools in the window's own toolbar, fills the window with
   the background you'll get, and puts the legend in a resizable inspector.
 - Copy & Close has a menu beside it for Save & Close, and for turning saving on
