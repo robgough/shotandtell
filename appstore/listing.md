@@ -37,7 +37,7 @@ listing accepts (the other is 2560 × 1600). Upload them in this order:
 | File | Caption in the image |
 | --- | --- |
 | `01-editor.png` | Annotate a screenshot in seconds |
-| `02-result.png` | One image, with the words attached |
+| `02-result.png` | One image, with all the context |
 | `03-redact.png` | Black out what they don't need to see |
 | `04-settings.png` | Set it up once |
 

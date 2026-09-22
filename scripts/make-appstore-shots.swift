@@ -156,7 +156,7 @@ wide("win.png",
      radius: 30, to: "01-editor.png")
 
 wide("export.png",
-     "One image, with the words attached",
+     "One image, with all the context",
      "Hand it to an AI agent, a colleague or a customer — every point already has a number.",
      radius: 20, to: "02-result.png")
 
