@@ -5,8 +5,8 @@ Connect without the line breaks a Markdown table would put in them:
 
 | Field | File | Length |
 | --- | --- | --- |
-| Promotional Text | [`promotional-text.txt`](promotional-text.txt) | 159 / 170 |
-| Description | [`description.txt`](description.txt) | 2496 / 4000 |
+| Promotional Text | [`promotional-text.txt`](promotional-text.txt) | 153 / 170 |
+| Description | [`description.txt`](description.txt) | 2633 / 4000 |
 | Keywords | [`keywords.txt`](keywords.txt) | 98 / 100 |
 | App Review notes | [`review-notes.txt`](review-notes.txt) | 1549 |
 
@@ -36,7 +36,7 @@ listing accepts (the other is 2560 × 1600). Upload them in this order:
 
 | File | Caption in the image |
 | --- | --- |
-| `01-editor.png` | Point at it, then say what you mean |
+| `01-editor.png` | Annotate a screenshot in seconds |
 | `02-result.png` | One image, with the words attached |
 | `03-redact.png` | Black out what they don't need to see |
 | `04-settings.png` | Set it up once |

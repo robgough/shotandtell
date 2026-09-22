@@ -151,8 +151,8 @@ func portrait(_ file: String, _ headline: String, _ sub: String, bullets: [Strin
 // A window screencapture keeps macOS's own corner radius; the compositions are
 // square-cornered images and want the frame's radius instead.
 wide("win.png",
-     "Point at it, then say what you mean",
-     "Numbered pins, arrows and boxes — each one with its own line of description.",
+     "Annotate a screenshot in seconds",
+     "Drop a numbered marker, draw an arrow, box a section off — then type a line against each number.",
      radius: 30, to: "01-editor.png")
 
 wide("export.png",

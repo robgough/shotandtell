@@ -1,4 +1,4 @@
-Shot and Tell takes a screenshot, lets you put numbered marks on the parts you mean, and gives you back one image with a numbered legend beside it.
+Shot and Tell takes a screenshot and lets you annotate it. Drop a numbered marker on something, draw an arrow at it, or box a whole section off. Type a line against each number, and you get back one image with the legend beside it.
 
 That’s the whole idea. “The heading in ① is too big” means something to a colleague, and it means something to a model that can only see pixels.
 
@@ -6,7 +6,7 @@ HOW IT GOES
 
 1. Press ⌃⇧S from any app, click the Dock icon, or pick New Capture from the menu bar. Drag out a region, click a window, or take a whole screen. Space swaps between dragging and picking a window, and a magnifier shows the exact pixel under the crosshair so you land on an edge rather than near it. There’s a 3, 5 or 10 second timer for when you need a menu open first.
 
-2. Drop numbered pins, arrows and boxes on the things you want to talk about. The cursor lands in the legend row the moment a mark does, so you type the description straight away and move on.
+2. Mark it up. Drop a numbered marker, drag out an arrow, or box off a whole area — each one gets the next number in the sequence. The cursor lands in the legend row the moment a mark does, so you type the description straight away and move on.
 
 3. Drag redaction blocks over anything that shouldn’t leave your machine.
 
