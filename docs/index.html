@@ -3,23 +3,13 @@
     Shot and Tell — marketing site. Served by GitHub Pages from /docs.
 
     HOSTNAME
-    There is deliberately no docs/CNAME yet, so this serves at
-    https://robgough.github.io/shotandtell/ . Dictator and Belfry live at
-    <name>.robgough.net; to do the same here, in this order:
+    Served at https://shotandtell.robgough.net/ — docs/CNAME holds the hostname
+    and the DNS CNAMEs to robgough.github.io. Canonical, og:url, og:image,
+    twitter:image and the JSON-LD url/image all point there, in this file and in
+    privacy.html and terms.html; change them together if the hostname ever does.
 
-      1. Repoint the DNS. Note that shotandtell.robgough.net ALREADY EXISTS and
-         currently CNAMEs to robgough.net — checked 22 Sep 2026. It has to point
-         at Pages instead:
-             shotandtell.robgough.net.  CNAME  robgough.github.io.
-      2. Add docs/CNAME containing exactly one line, the hostname:
-             shotandtell.robgough.net
-      3. Replace every "https://robgough.github.io/shotandtell/" in this file
-         (canonical, og:url, og:image, twitter:image, the JSON-LD "url" and
-         "image") and the same set in privacy.html.
-      4. Repo Settings › Pages: tick "Enforce HTTPS" once the certificate issues.
-
-    A CNAME for a hostname with no DNS record takes the whole site down, which
-    is why step 1 comes before step 2 and why the file isn't here yet.
+    Repo Settings › Pages: tick "Enforce HTTPS" once the certificate has issued,
+    if it isn't already on.
 
     APP STORE LINK
     The download button is a "coming soon" placeholder. Search this file for
@@ -32,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Shot and Tell — Screenshots you can point at</title>
     <meta name="description" content="A macOS screenshot tool for talking to AI about pictures. Mark up a capture with numbered pins, arrows and boxes, describe each one, redact what shouldn't be seen, and get one image with a numbered legend beside it. No network access at all. Free, Mac App Store, macOS 26+.">
-    <link rel="canonical" href="https://robgough.github.io/shotandtell/">
+    <link rel="canonical" href="https://shotandtell.robgough.net/">
     <link rel="icon" type="image/png" href="media/icon-180.png">
     <link rel="apple-touch-icon" href="media/icon-180.png">
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
@@ -41,11 +31,11 @@
     <!-- Open Graph -->
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Shot and Tell">
-    <meta property="og:url" content="https://robgough.github.io/shotandtell/">
+    <meta property="og:url" content="https://shotandtell.robgough.net/">
     <meta property="og:title" content="Shot and Tell — Screenshots you can point at">
     <meta property="og:description" content="Numbered marks on a screenshot, a numbered legend beside it, one image out. Redact what's private. The app can't reach the internet. Free for macOS 26+, coming to the Mac App Store.">
-    <meta property="og:image" content="https://robgough.github.io/shotandtell/media/example.png">
-    <meta property="og:image:secure_url" content="https://robgough.github.io/shotandtell/media/example.png">
+    <meta property="og:image" content="https://shotandtell.robgough.net/media/example.png">
+    <meta property="og:image:secure_url" content="https://shotandtell.robgough.net/media/example.png">
     <meta property="og:image:type" content="image/png">
     <meta property="og:image:width" content="1400">
     <meta property="og:image:height" content="755">
@@ -56,7 +46,7 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Shot and Tell — Screenshots you can point at">
     <meta name="twitter:description" content="Numbered marks on a screenshot, a numbered legend beside it, one image out. Redact what's private. The app can't reach the internet. Free for macOS 26+, coming to the Mac App Store.">
-    <meta name="twitter:image" content="https://robgough.github.io/shotandtell/media/example.png">
+    <meta name="twitter:image" content="https://shotandtell.robgough.net/media/example.png">
     <meta name="twitter:image:alt" content="A screenshot of a folder of app icons on a dark background, with four numbered red markers on it and a numbered legend to the right describing each one.">
 
     <!-- Structured data -->
@@ -66,10 +56,10 @@
         "@type": "SoftwareApplication",
         "name": "Shot and Tell",
         "description": "A macOS screenshot tool for talking to AI about pictures. Numbered pins, arrows and boxes with a legend beside the image; redactions composited into the export; no network access.",
-        "url": "https://robgough.github.io/shotandtell/",
+        "url": "https://shotandtell.robgough.net/",
         "applicationCategory": "UtilitiesApplication",
         "operatingSystem": "macOS 26+",
-        "image": "https://robgough.github.io/shotandtell/media/example.png",
+        "image": "https://shotandtell.robgough.net/media/example.png",
         "offers": {
             "@type": "Offer",
             "price": "0",

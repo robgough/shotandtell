@@ -36,6 +36,6 @@ brew install xcodegen
 See [CLAUDE.md](CLAUDE.md) for the details, [PLAN.md](PLAN.md) for why it's built
 this way, and [RELEASING.md](RELEASING.md) for shipping it.
 
-[shotandtell site](https://robgough.github.io/shotandtell/) · [privacy](https://robgough.github.io/shotandtell/privacy.html)
+[shotandtell site](https://shotandtell.robgough.net/) · [privacy](https://shotandtell.robgough.net/privacy.html)
 
 **Status: in development.** Headed for the Mac App Store.
