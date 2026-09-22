@@ -246,7 +246,10 @@ nonisolated struct CompositionLayout: Sendable {
         _ composition: Composition,
         captureSize: CGSize
     ) -> (left: CGFloat, right: CGFloat, top: CGFloat, bottom: CGFloat) {
-        let allowance = markerDiameter / 2 + 4
+        // The badge's radius, its 2pt ring, and room to breathe — the ring and
+        // the mark shadow both reach past the badge itself, and a number jammed
+        // against the edge of the image looks cropped even when it isn't.
+        let allowance = markerDiameter / 2 + 16
         var left: CGFloat = 0, right: CGFloat = 0, top: CGFloat = 0, bottom: CGFloat = 0
 
         for annotation in composition.annotations {

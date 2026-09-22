@@ -16,6 +16,9 @@ don't.
 - Arrows taper from a fine tail to a swept, notched head, with an outline so
   they stay visible when they cross something the same colour.
 - Boxes are outlined on both edges, matching the arrows and number badges.
+- Arrows, boxes and redactions can be started anywhere on the canvas, not just
+  within a thin strip around the screenshot, so an arrow's number can sit well
+  out in the background. Marks out there get more room around them in the export.
 - Dark compositions use the same vivid marker colours as light ones, rather than
   washed-out pastels, and a badge's ring always matches its number.
 - The marker colour and Background buttons stay readable whatever the canvas

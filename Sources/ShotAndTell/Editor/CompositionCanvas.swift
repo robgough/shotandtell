@@ -33,6 +33,15 @@ final class CompositionCanvasView: NSView {
     /// the other end of an arrow.
     private var resizing: (id: UUID, handle: Handle, anchor: CGPoint)?
 
+    /// How far a mark may go during the current gesture, in normalised
+    /// coordinates — fixed at mouse-down.
+    ///
+    /// Fixed because the canvas grows to fit a mark that reaches into the
+    /// margin, which refits it smaller, which puts the same cursor position
+    /// further out again. Recomputing each drag event would let a mark held at
+    /// the edge of the window creep outwards on every mouse move.
+    private var gestureBounds: CGRect?
+
     enum Handle: CaseIterable {
         case bottomLeft, bottomRight, topLeft, topRight
         /// Arrows resize by their ends rather than by a bounding box.
@@ -258,23 +267,39 @@ final class CompositionCanvasView: NSView {
         )
     }
 
-    /// Normalised position, allowed to fall outside the capture by as much as
-    /// the composition's own margin.
+    /// Normalised position, allowed to fall outside the capture anywhere on the
+    /// visible canvas.
     ///
     /// Boxing something in a corner, or starting an arrow out in the background
     /// and pointing it inwards, both mean working in the margin. The layout
-    /// grows the canvas to fit whatever lands there; the clamp only stops a mark
-    /// being dragged somewhere the canvas would have to become absurd to
-    /// contain.
+    /// grows the canvas to fit whatever lands there. This used to stop at the
+    /// composition's own 44pt padding, which left a sliver you had to hit
+    /// exactly — the limit is now wherever you can click.
     private func normalisedAllowingMargin(_ viewPoint: CGPoint, layout: CompositionLayout) -> CGPoint {
-        let margin = CompositionLayout.padding
-        let allowed = layout.captureRect.insetBy(dx: -margin, dy: -margin)
-        let point = canvasPoint(viewPoint)
-        let clamped = CGPoint(
-            x: min(max(point.x, allowed.minX), allowed.maxX),
-            y: min(max(point.y, allowed.minY), allowed.maxY)
+        let bounds = gestureBounds ?? reachableBounds(layout: layout)
+        let point = Compositor.normalise(canvasPoint(viewPoint), in: layout.captureRect)
+        return CGPoint(
+            x: min(max(point.x, bounds.minX), bounds.maxX),
+            y: min(max(point.y, bounds.minY), bounds.maxY)
         )
-        return Compositor.normalise(clamped, in: layout.captureRect)
+    }
+
+    /// The part of the view a mark can be put in, as a normalised rectangle:
+    /// everything below the toolbar, and never less than the old padding
+    /// allowance, so a window sized tight around the composition doesn't
+    /// shrink it.
+    private func reachableBounds(layout: CompositionLayout) -> CGRect {
+        let area = safeAreaRect
+        let a = Compositor.normalise(canvasPoint(CGPoint(x: area.minX, y: area.minY)), in: layout.captureRect)
+        let b = Compositor.normalise(canvasPoint(CGPoint(x: area.maxX, y: area.maxY)), in: layout.captureRect)
+        let visible = CGRect(x: min(a.x, b.x), y: min(a.y, b.y), width: abs(b.x - a.x), height: abs(b.y - a.y))
+
+        let padding = CGVector(
+            dx: CompositionLayout.padding / max(layout.captureRect.width, 1),
+            dy: CompositionLayout.padding / max(layout.captureRect.height, 1)
+        )
+        let minimum = CGRect(x: -padding.dx, y: -padding.dy, width: 1 + padding.dx * 2, height: 1 + padding.dy * 2)
+        return visible.union(minimum)
     }
 
     /// Normalised position on the capture, or nil if the point isn't on it —
@@ -315,14 +340,18 @@ final class CompositionCanvasView: NSView {
             return
         }
         addCursorRect(bounds, cursor: .openHand)
-        if !fitRect.isEmpty {
-            addCursorRect(fitRect, cursor: .crosshair)
+        // The dragged tools can start anywhere below the toolbar; the pin only
+        // lands on the composition.
+        let drawable = tool.isDragged ? safeAreaRect : fitRect
+        if !drawable.isEmpty {
+            addCursorRect(drawable, cursor: .crosshair)
         }
     }
 
     override func mouseDown(with event: NSEvent) {
         guard let document else { return }
         let point = convert(event.locationInWindow, from: nil)
+        gestureBounds = cachedLayout.map { reachableBounds(layout: $0) }
 
         // Empty canvas drags the window, the way empty space in any Mac window
         // does. The canvas fills the whole content area and runs under the
@@ -391,7 +420,7 @@ final class CompositionCanvasView: NSView {
                 let isRedaction = document.composition.annotations
                     .first { $0.id == resizing.id }
                     .map { !$0.isNumbered } ?? false
-                kind = isRedaction ? .redaction(rect) : .box(rect)
+                kind = isRedaction ? .redaction(rect.intersection(Self.unitSquare)) : .box(rect)
             }
             document.setKind(kind, for: resizing.id)
             invalidate()
@@ -403,9 +432,13 @@ final class CompositionCanvasView: NSView {
                 dx: (point.x - last.x) / fitScale / layout.captureRect.width,
                 dy: -(point.y - last.y) / fitScale / layout.captureRect.height
             )
+            // `move` takes a symmetric margin, so use the larger reach on each
+            // axis. At worst a mark can go a little past the view on the
+            // narrower side, and the canvas grows to show it.
+            let bounds = gestureBounds ?? reachableBounds(layout: layout)
             let margin = CGVector(
-                dx: CompositionLayout.padding / layout.captureRect.width,
-                dy: CompositionLayout.padding / layout.captureRect.height
+                dx: max(-bounds.minX, bounds.maxX - 1, 0),
+                dy: max(-bounds.minY, bounds.maxY - 1, 0)
             )
             document.move(movingID, by: delta, within: margin)
             lastMovePoint = point
@@ -426,6 +459,7 @@ final class CompositionCanvasView: NSView {
             movingID = nil
             lastMovePoint = nil
             resizing = nil
+            gestureBounds = nil
             document.endCoalescing()
             // Always redraw, including on the paths that create nothing.
             // Otherwise the half-drawn shape stays painted on the canvas with
@@ -459,10 +493,15 @@ final class CompositionCanvasView: NSView {
                 width: abs(to.x - from.x),
                 height: abs(to.y - from.y)
             )
-            guard rect.width * layout.captureRect.width > 6,
-                  rect.height * layout.captureRect.height > 6
+            // A redaction only ever covers the screenshot, and is clipped to it
+            // when drawn. Left un-trimmed, the part over the background would
+            // still grow the canvas to fit something nobody can see.
+            let shape = document.tool == .box ? rect : rect.intersection(Self.unitSquare)
+            guard !shape.isNull,
+                  shape.width * layout.captureRect.width > 6,
+                  shape.height * layout.captureRect.height > 6
             else { return }
-            document.add(Annotation(kind: document.tool == .box ? .box(rect) : .redaction(rect)))
+            document.add(Annotation(kind: document.tool == .box ? .box(shape) : .redaction(shape)))
 
         default:
             break
@@ -473,15 +512,21 @@ final class CompositionCanvasView: NSView {
     /// Whether a click at this point should move the window instead of marking
     /// the screenshot.
     ///
-    /// Outside the composition entirely: always, whatever the tool — that area
-    /// is nothing but background. Inside it: only with Select, and only where
-    /// there's no mark to pick up. A drawing tool needs the margin, because a
-    /// box around something in a corner starts out there.
+    /// With a drawing tool — arrow, box, redaction — never below the toolbar:
+    /// the whole visible canvas is somewhere a drag can start, because an
+    /// arrow's number often wants to sit out in the background, well clear of
+    /// the thing it points at. Up under the toolbar the window still moves.
+    ///
+    /// With Select or the pin: outside the composition always, and inside it
+    /// only where there's no mark to pick up.
     private func shouldDragWindow(from point: CGPoint, tool: EditorTool) -> Bool {
+        if tool.isDragged { return !safeAreaRect.contains(point) }
         guard fitRect.contains(point) else { return true }
         guard tool == .select else { return false }
         return topmostAnnotation(at: point) == nil
     }
+
+    private static let unitSquare = CGRect(x: 0, y: 0, width: 1, height: 1)
 
     private func topmostAnnotation(at viewPoint: CGPoint) -> Annotation? {
         guard let document, let layout = cachedLayout else { return nil }
