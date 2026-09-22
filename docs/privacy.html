@@ -75,6 +75,9 @@
             color: var(--fg-dim); font-size: 13px;
         }
     </style>
+    <!-- Fathom - beautiful, simple website analytics -->
+    <script src="https://cdn.usefathom.com/script.js" data-site="ZXVMETVO" defer></script>
+    <!-- / Fathom -->
 </head>
 <body>
 <div class="wrap">
@@ -85,7 +88,7 @@
     <p>Shot and Tell runs entirely on your Mac. The short version: it collects nothing, and it is not able to send anything anywhere.</p>
 
     <h2>It has no network access</h2>
-    <p>The app ships without the macOS network entitlement (<code>com.apple.security.network.client</code>). It runs inside the App Store sandbox, and without that entitlement the sandbox does not let it open a network connection at all. There are no update checks (updates come through the App Store), no analytics, no crash reporting, no account, no sign-in, and no server-side component. This isn't a policy the app follows; it's a capability it doesn't have. The entitlements file is in the <a href="https://github.com/robgough/shotandtell/blob/main/Sources/ShotAndTell/ShotAndTell.entitlements">source</a>.</p>
+    <p>The app ships without the macOS network entitlement (<code>com.apple.security.network.client</code>). It runs inside the App Store sandbox, and without that entitlement the sandbox does not let it open a network connection at all. There are no update checks (updates come through the App Store), no analytics, no crash reporting, no account, no sign-in, and no server-side component. (The website you're reading does count page views — see <a href="#website">This website</a> below. The app does not, and could not.) This isn't a policy the app follows; it's a capability it doesn't have. The entitlements file is in the <a href="https://github.com/robgough/shotandtell/blob/main/Sources/ShotAndTell/ShotAndTell.entitlements">source</a>.</p>
 
     <h2>What it reads</h2>
     <p><strong>The screen, when you ask it to.</strong> When you start a capture, the app reads the screen through Apple's ScreenCaptureKit, under the Screen &amp; System Audio Recording permission that macOS asks you for the first time. It reads a frame of each display to freeze the screen while you choose what to take, and then the region, window or screen you chose. Those frames are held in memory only. Nothing is read from the screen at any other time. The app does not use the Accessibility API and does not read text from other apps.</p>
@@ -107,8 +110,8 @@
     <h2>Permissions</h2>
     <p>macOS asks you to grant <strong>Screen &amp; System Audio Recording</strong> the first time you start a capture. That is the only permission the app needs. It can be revoked at any time from System Settings › Privacy &amp; Security. The app never asks for Accessibility, Microphone, Camera, Contacts, Location or Notifications.</p>
 
-    <h2>This website</h2>
-    <p>This site is static pages served by GitHub Pages. It loads no analytics and sets no cookies. GitHub's standard access logs apply to any request to it; see <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">GitHub's privacy statement</a>.</p>
+    <h2 id="website">This website</h2>
+    <p>This site is static pages served by GitHub Pages. It uses <a href="https://usefathom.com/">Fathom Analytics</a> to count page views. Fathom sets no cookies, doesn't track individuals across sites, and doesn't collect personal data. It runs on the website only — there is nothing like it in the app, and the app has no network access to send anything with. GitHub's standard access logs apply to any request to the site; see <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">GitHub's privacy statement</a>.</p>
 
     <h2>Changes</h2>
     <p>If any of this changes — in particular, if the app ever gains network access for any reason — this page and the app's privacy manifest change in the same release, and the change is noted in the <a href="https://github.com/robgough/shotandtell/blob/main/CHANGELOG.md">changelog</a>.</p>
@@ -117,7 +120,8 @@
     <p>Questions: <a href="mailto:hello@robgough.net">hello@robgough.net</a>.</p>
 
     <footer>
-        Shot and Tell is made by <a href="https://robgough.net">Rob Gough</a>. Source on <a href="https://github.com/robgough/shotandtell">GitHub</a>.
+        Shot and Tell is made by <a href="https://robgough.net">Rob Gough</a>. Source on <a href="https://github.com/robgough/shotandtell">GitHub</a>. <a href="terms.html">Terms</a>.<br>
+        © 2026 Rob Gough.
     </footer>
 </div>
 </body>

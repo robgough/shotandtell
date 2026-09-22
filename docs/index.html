@@ -597,7 +597,16 @@
         footer a { color: var(--fg-dim); text-decoration: none; }
         footer a:hover { color: var(--fg); }
         footer .sep { color: var(--border); }
-    </style>
+        footer .copyright {
+        display: block;
+        margin-top: 14px;
+        font-size: 0.82rem;
+        color: var(--muted);
+    }
+</style>
+    <!-- Fathom - beautiful, simple website analytics -->
+    <script src="https://cdn.usefathom.com/script.js" data-site="ZXVMETVO" defer></script>
+    <!-- / Fathom -->
 </head>
 <body>
 <div class="wrap">
@@ -630,11 +639,11 @@
         </div>
 
         <ul class="feature-chips" aria-label="At a glance">
-            <li class="chip">Can't reach the internet</li>
             <li class="chip">Numbered pins, arrows and boxes</li>
-            <li class="chip">Redactions baked into the export</li>
             <li class="chip">Legend on the clipboard as text</li>
+            <li class="chip">Redactions baked into the export</li>
             <li class="chip"><kbd>⌃⇧S</kbd> from any app</li>
+            <li class="chip">Can't reach the internet</li>
             <li class="chip">Free, MIT licensed</li>
         </ul>
 
@@ -749,22 +758,22 @@
 
     <section id="privacy">
         <h2>Nothing leaves your Mac</h2>
-        <p class="lede">This is a tool for handing screenshots to other people and to AI models. It's worth being precise about what it does on its own, which is nothing.</p>
+        <p class="lede">Screenshots usually have something in them you'd rather not send anywhere. So the app can't send anything anywhere.</p>
 
         <div class="privacy-card">
             <h3>It cannot reach the internet.</h3>
-            <p>Shot and Tell ships without the macOS network entitlement. Inside the App Store sandbox, that means the app is not able to open a connection — not for updates, not for analytics, not for anything.</p>
-            <p>That isn't a promise in a description field. It's a capability the app doesn't have, and you can check it: the entitlements are in the <a href="https://github.com/robgough/shotandtell/blob/main/Sources/ShotAndTell/ShotAndTell.entitlements">source</a>.</p>
+            <p>Shot and Tell ships without the macOS network entitlement. Inside the App Store sandbox that means it can't open a connection at all — no updates, no analytics, no crash reports.</p>
+            <p>You can check. The entitlements file is in the <a href="https://github.com/robgough/shotandtell/blob/main/Sources/ShotAndTell/ShotAndTell.entitlements">source</a>.</p>
         </div>
 
         <ul class="privacy-list">
-            <li><strong>No telemetry, no analytics, no account.</strong> There is nothing to sign in to and nothing counting you.</li>
-            <li><strong>Redactions are composited in.</strong> A redaction block is an opaque fill in the exported image. The pixels underneath never reach the clipboard or the file.</li>
-            <li><strong>The original capture is never written to disk.</strong> It's held in memory while you work. The only file the app writes is the composed export — to Pictures › Shot and Tell, or a folder you choose. Saving can be turned off.</li>
-            <li><strong>Title suggestions run on the device.</strong> They use Apple's on-device model through the Foundation Models framework, and only if Apple Intelligence is on. Nothing goes to a server. (There is no network entitlement, so it couldn't.)</li>
-            <li><strong>One permission.</strong> macOS asks for Screen &amp; System Audio Recording the first time you capture, because that is how any app reads the screen. No Accessibility access is needed. Nothing is captured until you start a capture.</li>
+            <li><strong>No account.</strong> Nothing to sign in to, nothing to set up.</li>
+            <li><strong>Redactions are composited in.</strong> A redaction is an opaque fill in the exported image. Whatever was underneath never reaches the clipboard or the file.</li>
+            <li><strong>The capture is never written to disk.</strong> It stays in memory while you work on it. The only file written is the finished image, to Pictures › Shot and Tell or a folder you pick — and you can turn saving off.</li>
+            <li><strong>Titles are suggested on the device.</strong> By Apple's on-device model, when Apple Intelligence is on. Off, or on macOS 26, you type your own.</li>
+            <li><strong>One permission.</strong> Screen &amp; System Audio Recording, asked for the first time you capture, because that's how any app reads the screen. No Accessibility access. Nothing is read until you start a capture.</li>
         </ul>
-        <p class="privacy-more">The longer version is on the <a href="privacy.html">privacy page</a>.</p>
+        <p class="privacy-more">This website counts page views with <a href="https://usefathom.com/">Fathom</a>, which is cookieless and doesn't track people between sites. The app doesn't, and couldn't. Full detail on the <a href="privacy.html">privacy page</a>.</p>
     </section>
 
     <section id="why" class="author">
@@ -844,7 +853,10 @@
         <span class="sep">·</span>
         <a href="privacy.html">Privacy</a>
         <span class="sep">·</span>
+        <a href="terms.html">Terms</a>
+        <span class="sep">·</span>
         <a href="https://robgough.net">robgough.net</a>
+        <div class="copyright">© 2026 Rob Gough. Shot and Tell is <a href="https://github.com/robgough/shotandtell/blob/main/LICENSE">MIT licensed</a>; this site and its images are not.</div>
     </footer>
 </div>
 </body>

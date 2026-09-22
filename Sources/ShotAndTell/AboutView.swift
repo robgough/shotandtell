@@ -14,6 +14,7 @@ struct AboutView: View {
                 author
                 privacy
                 utilities
+                copyright
             }
             .padding(24)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -113,6 +114,14 @@ struct AboutView: View {
         // Pictures rather than opening nothing at all.
         let target = FileManager.default.fileExists(atPath: folder.path(percentEncoded: false)) ? folder : pictures
         NSWorkspace.shared.activateFileViewerSelecting([target])
+    }
+
+    /// The standard About panel showed NSHumanReadableCopyright for us; this
+    /// one has to say it itself.
+    private var copyright: some View {
+        Text("© 2026 Rob Gough. MIT licensed.")
+            .font(.footnote)
+            .foregroundStyle(.tertiary)
     }
 
     @ViewBuilder
