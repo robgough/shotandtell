@@ -122,7 +122,7 @@ targets:
     # file and clobber one of them on every `./gen`.
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: net.robgough.ShotAndTell
+        PRODUCT_BUNDLE_IDENTIFIER: net.robgough.shotandtell
         # "Shot and Tell.app" in Finder, Launchpad and the App Store — the name
         # people actually see. PRODUCT_MODULE_NAME keeps the Swift module a
         # valid identifier. Set now rather than later because changing it moves

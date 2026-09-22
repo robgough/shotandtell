@@ -41,7 +41,7 @@ Xcode → Settings → Accounts → Manage Certificates → **+** for each.
 
 At <https://appstoreconnect.apple.com>, create a new macOS app:
 
-- **Bundle ID** `net.robgough.ShotAndTell` — register it first under
+- **Bundle ID** `net.robgough.shotandtell` — register it first under
   Certificates, Identifiers & Profiles, with the App Sandbox capability.
 - **Name** "Shot and Tell" (confirmed available).
 - **Primary category** Productivity, matching `LSApplicationCategoryType`.

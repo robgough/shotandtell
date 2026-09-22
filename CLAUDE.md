@@ -66,10 +66,10 @@ through Settings → Save to, rather than emptying this one.
 
 ### Checking behaviour at runtime
 
-The app logs through `os.Logger` under subsystem `net.robgough.ShotAndTell`:
+The app logs through `os.Logger` under subsystem `net.robgough.shotandtell`:
 
 ```bash
-/usr/bin/log show --predicate 'subsystem == "net.robgough.ShotAndTell"' --last 5m --style compact
+/usr/bin/log show --predicate 'subsystem == "net.robgough.shotandtell"' --last 5m --style compact
 ```
 
 Use the **absolute path**: zsh has a `log` builtin that shadows the real tool and
@@ -92,7 +92,7 @@ which would silently disable the sandbox).
 
 Prefer the certificate releases are signed with, so local and released builds
 share a grant. If one goes stale:
-`tccutil reset ScreenCapture net.robgough.ShotAndTell`.
+`tccutil reset ScreenCapture net.robgough.shotandtell`.
 
 ## Architecture
 
@@ -204,7 +204,7 @@ Two things about that permission that cost an hour each:
   the prompt is still up — so a false result means "not yet", not "no".
 
 When a grant gets into a bad state during development:
-`tccutil reset ScreenCapture net.robgough.ShotAndTell`, then relaunch. Note that
+`tccutil reset ScreenCapture net.robgough.shotandtell`, then relaunch. Note that
 TCC records a decision per signing identity, so builds signed ad-hoc and builds
 signed with a certificate are, as far as it is concerned, different apps.
 
