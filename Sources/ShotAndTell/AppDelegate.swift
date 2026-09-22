@@ -7,6 +7,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         SettingsWindowController.shared.show()
     }
 
+    /// Ours rather than `orderFrontStandardAboutPanel`, which can only show a
+    /// name, a version and a copyright line.
+    @objc func openAbout() {
+        AboutWindowController.shared.show()
+    }
+
     private var menuBar: MenuBarController?
     private var editors: [EditorWindowController] = []
     /// The last capture whose window was closed, kept so it can be reopened.

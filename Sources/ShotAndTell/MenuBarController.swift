@@ -116,7 +116,8 @@ final class MenuBarController: NSObject, NSMenuDelegate {
         let settings = menu.addItem(withTitle: "Settings…", action: #selector(AppDelegate.openSettings), keyEquivalent: ",")
         settings.target = NSApp.delegate
 
-        menu.addItem(withTitle: "About Shot and Tell", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
+        let about = menu.addItem(withTitle: "About Shot and Tell", action: #selector(AppDelegate.openAbout), keyEquivalent: "")
+        about.target = NSApp.delegate
         menu.addItem(.separator())
         menu.addItem(withTitle: "Quit Shot and Tell", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
     }

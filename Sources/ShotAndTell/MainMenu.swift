@@ -26,7 +26,8 @@ enum MainMenu {
         let item = NSMenuItem()
         let menu = NSMenu()
 
-        menu.addItem(withTitle: "About Shot and Tell", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
+        let about = menu.addItem(withTitle: "About Shot and Tell", action: #selector(AppDelegate.openAbout), keyEquivalent: "")
+        about.target = NSApp.delegate
         menu.addItem(.separator())
 
         menu.addItem(withTitle: "Settings…", action: #selector(AppDelegate.openSettings), keyEquivalent: ",")

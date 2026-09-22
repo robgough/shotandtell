@@ -20,6 +20,8 @@ don't.
   and names the window you're about to take.
 - A global keyboard shortcut starts a capture from any app — ⌃⇧S to begin with,
   changeable in Settings.
+- An About window with what the app is, who made it, and exactly what does and
+  doesn't leave your Mac.
 - Settings for the shortcut, what the Dock icon does, the default background and
   light or dark, the exported image size, and where PNGs are saved.
 - Mark up a capture with numbered pins, numbered arrows, numbered boxes and
