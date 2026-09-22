@@ -43,7 +43,7 @@ struct AboutView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text("Shot and Tell")
                     .font(.system(size: 22, weight: .semibold, design: .rounded))
-                Text("Screenshots you can point at.")
+                Text("Annotate screenshots for AI.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
