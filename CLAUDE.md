@@ -47,6 +47,23 @@ while the Swift module is `ShotAndTell` (`PRODUCT_MODULE_NAME`).
 
 There is no test target yet and no lint config.
 
+### Never clear the save folder
+
+`~/Pictures/Shot and Tell` is the user's real folder, holding screenshots they
+took and may still want. Don't delete it, or its contents, to get a clean state
+for a test — `rm -rf` here is permanent, it doesn't go via the Trash, and it has
+already cost someone their exports once.
+
+To check what an export produced, note the newest file before the run and look
+for one newer afterwards:
+
+```bash
+ls -t "$HOME/Pictures/Shot and Tell" | head -1
+```
+
+If a test genuinely needs an empty folder, point the app at a temporary one
+through Settings → Save to, rather than emptying this one.
+
 ### Checking behaviour at runtime
 
 The app logs through `os.Logger` under subsystem `net.robgough.ShotAndTell`:
