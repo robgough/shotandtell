@@ -234,9 +234,18 @@ nonisolated enum Compositor {
 
         case let .box(normalised):
             let rect = denormalise(normalised, in: capture)
+            let outline = CGPath(roundedRect: rect.insetBy(dx: 1.25, dy: 1.25), cornerWidth: 4, cornerHeight: 4, transform: nil)
+            // Outlined on both edges, in the ring's colour, like the badge and
+            // the arrow — the inner edge matters as much as the outer, since
+            // the thing being boxed is inside it. A wider stroke first, then
+            // the marker colour down its middle, leaves 1.5pt either side.
+            context.setStrokeColor(palette.markerInk.copy(alpha: 0.95) ?? palette.markerInk)
+            context.setLineWidth(2.5 + 3)
+            context.addPath(outline)
+            context.strokePath()
             context.setStrokeColor(palette.marker)
             context.setLineWidth(2.5)
-            context.addPath(CGPath(roundedRect: rect.insetBy(dx: 1.25, dy: 1.25), cornerWidth: 4, cornerHeight: 4, transform: nil))
+            context.addPath(outline)
             context.strokePath()
             drawMarker(number: number, centre: CGPoint(x: rect.minX, y: rect.maxY), palette: palette, in: context)
 

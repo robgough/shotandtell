@@ -15,6 +15,7 @@ don't.
 - Marks carry a soft shadow, so they sit visibly on top of busy screenshots.
 - Arrows taper from a fine tail to a swept, notched head, with an outline so
   they stay visible when they cross something the same colour.
+- Boxes are outlined on both edges, matching the arrows and number badges.
 - Dark compositions use the same vivid marker colours as light ones, rather than
   washed-out pastels, and a badge's ring always matches its number.
 - The marker colour and Background buttons stay readable whatever the canvas
