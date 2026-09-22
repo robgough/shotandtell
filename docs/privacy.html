@@ -1,0 +1,124 @@
+<!doctype html>
+<!--
+    Privacy policy for Shot and Tell. The Mac App Store needs a URL for one,
+    and this is it. The canonical and OG URLs below use the github.io address;
+    change them alongside the CNAME (see the comment at the top of index.html).
+-->
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Shot and Tell — Privacy</title>
+    <meta name="description" content="How Shot and Tell handles your data. Short version: it can't send anything anywhere. The app has no network entitlement, keeps no history, and only writes the image you export, where you choose.">
+    <link rel="canonical" href="https://robgough.github.io/shotandtell/privacy.html">
+    <link rel="icon" type="image/png" href="media/icon.png">
+    <link rel="apple-touch-icon" href="media/icon.png">
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#0e1014" media="(prefers-color-scheme: dark)">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="Shot and Tell">
+    <meta property="og:url" content="https://robgough.github.io/shotandtell/privacy.html">
+    <meta property="og:title" content="Shot and Tell — Privacy">
+    <meta property="og:description" content="How Shot and Tell handles your data. Short version: it can't send anything anywhere.">
+    <meta property="og:image" content="https://robgough.github.io/shotandtell/media/example.png">
+    <meta property="og:image:width" content="1800">
+    <meta property="og:image:height" content="971">
+    <meta property="og:locale" content="en_GB">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Shot and Tell — Privacy">
+    <meta name="twitter:description" content="How Shot and Tell handles your data. Short version: it can't send anything anywhere.">
+    <meta name="twitter:image" content="https://robgough.github.io/shotandtell/media/example.png">
+
+    <style>
+        :root {
+            --bg: #ffffff; --fg: #15171a; --fg-dim: #5b6168;
+            --border: #e8e9ec; --accent: #d93a40;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #0e1014; --fg: #ececef; --fg-dim: #a4a8b1;
+                --border: #20232a; --accent: #f0666b;
+            }
+        }
+        html, body { margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+            background: var(--bg); color: var(--fg); line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+        .wrap { max-width: 680px; margin: 0 auto; padding: 56px 28px 80px; }
+        h1 {
+            font-family: "SF Pro Rounded", -apple-system, system-ui, sans-serif;
+            font-size: 32px; font-weight: 600; margin: 0 0 6px; letter-spacing: -0.01em;
+        }
+        .updated { color: var(--fg-dim); font-size: 14px; margin: 0 0 32px; }
+        h2 {
+            font-family: "SF Pro Rounded", -apple-system, system-ui, sans-serif;
+            font-size: 18px; margin: 36px 0 10px;
+        }
+        p { color: var(--fg); }
+        p.muted { color: var(--fg-dim); }
+        a { color: var(--accent); }
+        code {
+            font-family: ui-monospace, "SF Mono", SFMono-Regular, Menlo, monospace;
+            font-size: 0.9em;
+        }
+        .back {
+            display: inline-block; color: var(--fg-dim); font-size: 14px;
+            text-decoration: none; margin-bottom: 32px;
+        }
+        .back:hover { color: var(--fg); }
+        footer {
+            margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--border);
+            color: var(--fg-dim); font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <a class="back" href="index.html">&larr; Shot and Tell</a>
+    <h1>Privacy</h1>
+    <p class="updated">Last updated: 22 September 2026</p>
+
+    <p>Shot and Tell runs entirely on your Mac. The short version: it collects nothing, and it is not able to send anything anywhere.</p>
+
+    <h2>It has no network access</h2>
+    <p>The app ships without the macOS network entitlement (<code>com.apple.security.network.client</code>). It runs inside the App Store sandbox, and without that entitlement the sandbox does not let it open a network connection at all. There are no update checks (updates come through the App Store), no analytics, no crash reporting, no account, no sign-in, and no server-side component. This isn't a policy the app follows; it's a capability it doesn't have. The entitlements file is in the <a href="https://github.com/robgough/shotandtell/blob/main/Sources/ShotAndTell/ShotAndTell.entitlements">source</a>.</p>
+
+    <h2>What it reads</h2>
+    <p><strong>The screen, when you ask it to.</strong> When you start a capture, the app reads the screen through Apple's ScreenCaptureKit, under the Screen &amp; System Audio Recording permission that macOS asks you for the first time. It reads a frame of each display to freeze the screen while you choose what to take, and then the region, window or screen you chose. Those frames are held in memory only. Nothing is read from the screen at any other time. The app does not use the Accessibility API and does not read text from other apps.</p>
+
+    <h2>What it keeps</h2>
+    <p><strong>The capture you're working on</strong> stays in memory while the editor is open, and after you close it so it can be reopened from the menu bar, until the next capture or until you quit. It is never written to disk.</p>
+    <p><strong>Your settings</strong> — the shortcut, the default background, the export size, the save folder and the like — are stored in the app's own preferences inside its sandbox container. If you choose a save folder other than the default, the app keeps a security-scoped bookmark to that folder so it can still write there next time. Nothing else is stored. There is no history or library of past captures.</p>
+
+    <h2>What it writes</h2>
+    <p>One kind of file: the composed export — the screenshot on its background with the marks and legend beside it — as a PNG. By default it goes to <code>~/Pictures/Shot and Tell/</code>; you can choose another folder in Settings, or turn saving off, in which case the only copy is the one on the clipboard.</p>
+    <p>On Copy or Copy &amp; Close, the same image is placed on the clipboard, with the legend as plain text alongside it, so pasting into a text field gives words rather than nothing. The clipboard is yours; anything you paste it into is governed by that app's privacy policy, not this one.</p>
+
+    <h2>Redactions</h2>
+    <p>A redaction block is painted into the exported image as an opaque fill. The pixels underneath are not in the exported file and not on the clipboard. The legend text is whatever you typed, so don't type the thing you redacted.</p>
+
+    <h2>Title suggestions</h2>
+    <p>If Apple Intelligence is turned on and the Mac's on-device model can look at images (macOS 27 or later), Shot and Tell asks it for a short title for the capture through Apple's Foundation Models framework. The model runs on your Mac. The screenshot is not sent to Apple or anyone else — and, since the app has no network entitlement, it couldn't be. If Apple Intelligence is off or unavailable, nothing happens and you type the title yourself.</p>
+
+    <h2>Permissions</h2>
+    <p>macOS asks you to grant <strong>Screen &amp; System Audio Recording</strong> the first time you start a capture. That is the only permission the app needs. It can be revoked at any time from System Settings › Privacy &amp; Security. The app never asks for Accessibility, Microphone, Camera, Contacts, Location or Notifications.</p>
+
+    <h2>This website</h2>
+    <p>This site is static pages served by GitHub Pages. It loads no analytics and sets no cookies. GitHub's standard access logs apply to any request to it; see <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">GitHub's privacy statement</a>.</p>
+
+    <h2>Changes</h2>
+    <p>If any of this changes — in particular, if the app ever gains network access for any reason — this page and the app's privacy manifest change in the same release, and the change is noted in the <a href="https://github.com/robgough/shotandtell/blob/main/CHANGELOG.md">changelog</a>.</p>
+
+    <h2>Contact</h2>
+    <p>Questions: <a href="mailto:hello@robgough.net">hello@robgough.net</a>.</p>
+
+    <footer>
+        Shot and Tell is made by <a href="https://robgough.net">Rob Gough</a>. Source on <a href="https://github.com/robgough/shotandtell">GitHub</a>.
+    </footer>
+</div>
+</body>
+</html>

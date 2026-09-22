@@ -1,0 +1,851 @@
+<!doctype html>
+<!--
+    Shot and Tell — marketing site. Served by GitHub Pages from /docs.
+
+    HOSTNAME
+    There is deliberately no docs/CNAME yet, so this serves at
+    https://robgough.github.io/shotandtell/ . Dictator and Belfry live at
+    <name>.robgough.net; to do the same here, in this order:
+
+      1. Repoint the DNS. Note that shotandtell.robgough.net ALREADY EXISTS and
+         currently CNAMEs to robgough.net — checked 22 Sep 2026. It has to point
+         at Pages instead:
+             shotandtell.robgough.net.  CNAME  robgough.github.io.
+      2. Add docs/CNAME containing exactly one line, the hostname:
+             shotandtell.robgough.net
+      3. Replace every "https://robgough.github.io/shotandtell/" in this file
+         (canonical, og:url, og:image, twitter:image, the JSON-LD "url" and
+         "image") and the same set in privacy.html.
+      4. Repo Settings › Pages: tick "Enforce HTTPS" once the certificate issues.
+
+    A CNAME for a hostname with no DNS record takes the whole site down, which
+    is why step 1 comes before step 2 and why the file isn't here yet.
+
+    APP STORE LINK
+    The download button is a "coming soon" placeholder. Search this file for
+    APP-STORE-LINK — it's one spot, in the hero, with the replacement markup
+    in the comment beside it.
+-->
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Shot and Tell — Screenshots you can point at</title>
+    <meta name="description" content="A macOS screenshot tool for talking to AI about pictures. Mark up a capture with numbered pins, arrows and boxes, describe each one, redact what shouldn't be seen, and get one image with a numbered legend beside it. No network access at all. Free, Mac App Store, macOS 26+.">
+    <link rel="canonical" href="https://robgough.github.io/shotandtell/">
+    <link rel="icon" type="image/png" href="media/icon-180.png">
+    <link rel="apple-touch-icon" href="media/icon-180.png">
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#0e1014" media="(prefers-color-scheme: dark)">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Shot and Tell">
+    <meta property="og:url" content="https://robgough.github.io/shotandtell/">
+    <meta property="og:title" content="Shot and Tell — Screenshots you can point at">
+    <meta property="og:description" content="Numbered marks on a screenshot, a numbered legend beside it, one image out. Redact what's private. The app can't reach the internet. Free for macOS 26+, coming to the Mac App Store.">
+    <meta property="og:image" content="https://robgough.github.io/shotandtell/media/example.png">
+    <meta property="og:image:secure_url" content="https://robgough.github.io/shotandtell/media/example.png">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image:width" content="1400">
+    <meta property="og:image:height" content="755">
+    <meta property="og:image:alt" content="A screenshot of a folder of app icons on a dark background, with four numbered red markers on it and a numbered legend to the right describing each one.">
+    <meta property="og:locale" content="en_GB">
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Shot and Tell — Screenshots you can point at">
+    <meta name="twitter:description" content="Numbered marks on a screenshot, a numbered legend beside it, one image out. Redact what's private. The app can't reach the internet. Free for macOS 26+, coming to the Mac App Store.">
+    <meta name="twitter:image" content="https://robgough.github.io/shotandtell/media/example.png">
+    <meta name="twitter:image:alt" content="A screenshot of a folder of app icons on a dark background, with four numbered red markers on it and a numbered legend to the right describing each one.">
+
+    <!-- Structured data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Shot and Tell",
+        "description": "A macOS screenshot tool for talking to AI about pictures. Numbered pins, arrows and boxes with a legend beside the image; redactions composited into the export; no network access.",
+        "url": "https://robgough.github.io/shotandtell/",
+        "applicationCategory": "UtilitiesApplication",
+        "operatingSystem": "macOS 26+",
+        "image": "https://robgough.github.io/shotandtell/media/example.png",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+        },
+        "author": {
+            "@type": "Person",
+            "name": "Rob Gough",
+            "url": "https://robgough.net"
+        }
+    }
+    </script>
+    <style>
+        :root {
+            --bg: #ffffff;
+            --fg: #15171a;
+            --fg-dim: #5b6168;
+            --fg-faint: #8a8f96;
+            /* The marker red from the app icon and the default marker colour. */
+            --accent: #d93a40;
+            --accent-ink: #ffffff;
+            --border: #e8e9ec;
+            --card: #f7f8fa;
+            /* Warm glows to echo the neutral dark background the app exports
+               onto. Softer in light mode so the type stays crisp. */
+            --glow-1: rgba(217, 58, 64, 0.10);
+            --glow-2: rgba(120, 72, 56, 0.10);
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #0e1014;
+                --fg: #ececef;
+                --fg-dim: #a4a8b1;
+                --fg-faint: #6f747d;
+                --accent: #f0666b;
+                --accent-ink: #15171a;
+                --border: #20232a;
+                --card: #161922;
+                --glow-1: rgba(217, 58, 64, 0.20);
+                --glow-2: rgba(120, 72, 56, 0.28);
+            }
+        }
+        * { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; }
+        html {
+            background: var(--bg);
+            scroll-behavior: smooth;
+            scroll-padding-top: 24px;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            html { scroll-behavior: auto; }
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", system-ui, sans-serif;
+            color: var(--fg);
+            line-height: 1.55;
+            -webkit-font-smoothing: antialiased;
+        }
+        /* Glows on a fixed pseudo-element so scrolling doesn't repaint them. */
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            pointer-events: none;
+            background:
+                radial-gradient(1200px 800px at 90% -20%, var(--glow-1), transparent 60%),
+                radial-gradient(900px 700px at -10% 120%, var(--glow-2), transparent 55%);
+            will-change: transform;
+        }
+        .wrap {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 64px 28px 96px;
+        }
+        a { color: var(--accent); }
+        code {
+            font-family: ui-monospace, "SF Mono", SFMono-Regular, Menlo, monospace;
+            background: color-mix(in oklab, var(--fg) 6%, transparent);
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-size: 12.5px;
+        }
+        kbd {
+            font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+            font-size: 0.92em;
+            white-space: nowrap;
+        }
+
+        /* ---- header ------------------------------------------------- */
+        header { margin-bottom: 56px; }
+        .brand-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .brand-icon {
+            display: block;
+            width: 64px;
+            height: 64px;
+            border-radius: 14px;
+            box-shadow: 0 12px 26px -16px color-mix(in oklab, var(--fg) 40%, transparent),
+                        0 2px 6px -3px color-mix(in oklab, var(--fg) 20%, transparent);
+        }
+        .logo {
+            font-family: "SF Pro Rounded", -apple-system, system-ui, sans-serif;
+            font-size: 22px;
+            color: var(--fg);
+            font-weight: 600;
+            letter-spacing: -0.005em;
+        }
+        h1 {
+            font-family: "SF Pro Rounded", -apple-system, system-ui, sans-serif;
+            font-size: 44px;
+            line-height: 1.08;
+            letter-spacing: -0.02em;
+            font-weight: 600;
+            margin: 28px 0 14px;
+        }
+        @media (max-width: 460px) {
+            h1 { font-size: 36px; }
+        }
+        h1 .accent { color: var(--accent); }
+        .tagline {
+            font-size: 19px;
+            color: var(--fg-dim);
+            max-width: 580px;
+            margin: 0 0 32px;
+        }
+        .tagline strong { color: var(--fg); font-weight: 600; }
+        .download-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 16px 22px;
+            margin: 0 0 6px;
+        }
+        .download-col {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .download-col .col-meta {
+            color: var(--fg-faint);
+            font-size: 12.5px;
+            letter-spacing: 0.005em;
+        }
+        .cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--fg);
+            color: var(--bg);
+            padding: 12px 18px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 15px;
+            transition: transform 0.06s ease;
+        }
+        .cta:hover { transform: translateY(-1px); }
+        /* The not-yet-live App Store button. Deliberately not a link:
+           muted fill, dashed edge, no hover lift, and it says so. */
+        .cta.pending {
+            background: var(--card);
+            color: var(--fg-dim);
+            border: 1px dashed color-mix(in oklab, var(--fg-faint) 70%, transparent);
+            cursor: default;
+            user-select: none;
+        }
+        .cta.pending:hover { transform: none; }
+        .cta.pending .soon {
+            font-size: 10.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--accent);
+            background: color-mix(in oklab, var(--accent) 12%, transparent);
+            border-radius: 999px;
+            padding: 3px 8px;
+        }
+        .secondary-link {
+            color: var(--fg-dim);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 15px;
+            border-bottom: 1px solid color-mix(in srgb, var(--fg-faint) 40%, transparent);
+        }
+        .secondary-link:hover { color: var(--accent); border-bottom-color: var(--accent); }
+        .feature-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 22px 0 0;
+            padding: 0;
+            list-style: none;
+            max-width: 620px;
+        }
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 13px;
+            color: var(--fg-dim);
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: 6px 12px 6px 11px;
+            line-height: 1.2;
+        }
+        .chip::before {
+            content: "";
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--accent);
+            flex-shrink: 0;
+        }
+        .preview-note {
+            margin: 24px 0 0;
+            padding: 14px 16px;
+            background: color-mix(in oklab, var(--accent) 6%, var(--card));
+            border: 1px solid color-mix(in oklab, var(--accent) 22%, var(--border));
+            border-radius: 10px;
+            color: var(--fg-dim);
+            font-size: 14.5px;
+            line-height: 1.55;
+            max-width: 580px;
+        }
+        .preview-note strong { color: var(--fg); font-weight: 600; }
+        .preview-note a { color: var(--accent); text-decoration: none; font-weight: 500; }
+        .preview-note a:hover { text-decoration: underline; }
+
+        /* ---- screenshots -------------------------------------------- */
+        .demo-frame {
+            position: relative;
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            box-shadow: 0 22px 60px -28px color-mix(in oklab, var(--fg) 30%, transparent),
+                        0 4px 12px -8px color-mix(in oklab, var(--fg) 20%, transparent);
+            background: var(--card);
+        }
+        .demo-frame img {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+        figure.shot { margin: 0; }
+        figure.shot + figure.shot { margin-top: 28px; }
+        figure.shot figcaption {
+            margin-top: 13px;
+            font-size: 13.5px;
+            color: var(--fg-dim);
+            line-height: 1.5;
+            text-align: center;
+        }
+        figure.shot figcaption strong { color: var(--fg); font-weight: 600; }
+        .demo { margin: 0; }
+
+        /* ---- sections ----------------------------------------------- */
+        section { margin-top: 56px; }
+        h2 {
+            font-family: "SF Pro Rounded", -apple-system, system-ui, sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--fg-faint);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin: 0 0 18px;
+        }
+        .lede {
+            font-size: 17px;
+            color: var(--fg);
+            margin: 0 0 8px;
+            max-width: 620px;
+            line-height: 1.5;
+        }
+        .lede + p {
+            font-size: 15.5px;
+            color: var(--fg-dim);
+            max-width: 620px;
+            margin: 0 0 28px;
+        }
+        section > p { max-width: 620px; }
+
+        /* How it works — numbered like the app's own markers. */
+        .steps {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: grid;
+            gap: 14px;
+            counter-reset: step;
+        }
+        .step {
+            display: grid;
+            grid-template-columns: 34px 1fr;
+            gap: 16px;
+            align-items: start;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 18px 20px;
+        }
+        .step::before {
+            counter-increment: step;
+            content: counter(step);
+            display: grid;
+            place-items: center;
+            width: 30px;
+            height: 30px;
+            margin-top: 1px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: var(--accent-ink);
+            border: 2px solid var(--bg);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+            font-family: "SF Pro Rounded", -apple-system, system-ui, sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            line-height: 1;
+        }
+        .step h3 {
+            font-size: 16px;
+            margin: 0 0 4px;
+            font-weight: 600;
+        }
+        .step p {
+            margin: 0;
+            color: var(--fg-dim);
+            font-size: 14.5px;
+        }
+        .step p strong { color: var(--fg); font-weight: 600; }
+        .shots-after-steps { margin-top: 28px; }
+
+        /* Feature cards. */
+        .features {
+            display: grid;
+            gap: 14px;
+        }
+        .features.pair { grid-template-columns: 1fr 1fr; }
+        @media (max-width: 640px) {
+            .features.pair { grid-template-columns: 1fr; }
+        }
+        .feature {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 18px 20px;
+        }
+        .feature h3 {
+            font-size: 16px;
+            margin: 0 0 4px;
+            font-weight: 600;
+        }
+        .feature p {
+            margin: 0;
+            color: var(--fg-dim);
+            font-size: 14.5px;
+        }
+        .feature p + p { margin-top: 8px; }
+        .feature p strong { color: var(--fg); font-weight: 600; }
+
+        /* Privacy — one accent-bordered card that carries the strong claim,
+           then a plain list of the rest. */
+        .privacy-card {
+            background: color-mix(in oklab, var(--accent) 5%, var(--card));
+            border: 1px solid color-mix(in oklab, var(--accent) 30%, var(--border));
+            border-radius: 12px;
+            padding: 20px 22px;
+            margin: 0 0 14px;
+        }
+        .privacy-card h3 {
+            font-family: "SF Pro Rounded", -apple-system, system-ui, sans-serif;
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0 0 8px;
+        }
+        .privacy-card p {
+            margin: 0;
+            color: var(--fg);
+            font-size: 15px;
+        }
+        .privacy-card p + p { margin-top: 8px; color: var(--fg-dim); font-size: 14.5px; }
+        .privacy-list {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            display: grid;
+            gap: 0;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: var(--card);
+            overflow: hidden;
+        }
+        .privacy-list li {
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--border);
+            font-size: 14.5px;
+            color: var(--fg-dim);
+        }
+        .privacy-list li:last-child { border-bottom: none; }
+        .privacy-list li strong { color: var(--fg); font-weight: 600; }
+        .privacy-more {
+            margin: 14px 0 0;
+            font-size: 14px;
+            color: var(--fg-faint);
+        }
+        .privacy-more a { color: var(--accent); text-decoration: none; font-weight: 500; }
+        .privacy-more a:hover { text-decoration: underline; }
+
+        /* Author. */
+        .author-text p {
+            margin: 0 0 14px;
+            max-width: 580px;
+            color: var(--fg);
+        }
+        .author-text p:last-child { margin-bottom: 0; }
+        .author-text a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .author-text a:hover { text-decoration: underline; }
+
+        /* FAQ. */
+        .faq details {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px 20px;
+            margin-bottom: 10px;
+        }
+        .faq details summary {
+            font-weight: 600;
+            cursor: pointer;
+            list-style: none;
+            padding-right: 28px;
+            position: relative;
+            color: var(--fg);
+            font-size: 15px;
+        }
+        .faq details summary::-webkit-details-marker { display: none; }
+        .faq details summary::after {
+            content: "+";
+            position: absolute;
+            right: 0;
+            top: -2px;
+            font-size: 20px;
+            font-weight: 400;
+            color: var(--fg-faint);
+            line-height: 1;
+        }
+        .faq details[open] summary::after { content: "−"; }
+        .faq details p {
+            margin: 10px 0 0;
+            color: var(--fg-dim);
+            font-size: 14.5px;
+            line-height: 1.55;
+        }
+        .faq details p a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .faq details p a:hover { text-decoration: underline; }
+
+        /* Requirements. */
+        .reqs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 18px;
+            color: var(--fg-dim);
+            font-size: 14px;
+            margin: 0;
+        }
+        .reqs strong { color: var(--fg); font-weight: 600; }
+        .table-footnote {
+            margin: 14px 0 0;
+            color: var(--fg-faint);
+            font-size: 13px;
+            line-height: 1.55;
+            max-width: 620px;
+        }
+
+        /* Final CTA. */
+        .final-cta {
+            text-align: center;
+            margin-top: 64px;
+            padding: 36px 24px 38px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+        }
+        .final-cta h2 {
+            font-family: "SF Pro Rounded", -apple-system, system-ui, sans-serif;
+            font-size: 26px;
+            font-weight: 600;
+            color: var(--fg);
+            text-transform: none;
+            letter-spacing: -0.01em;
+            margin: 0 0 8px;
+        }
+        .final-cta p {
+            color: var(--fg-dim);
+            margin: 0 auto 22px;
+            font-size: 15px;
+            max-width: 480px;
+        }
+        .final-cta .download-row { justify-content: center; }
+
+        footer {
+            margin-top: 80px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+            color: var(--fg-faint);
+            font-size: 13px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 18px;
+            align-items: center;
+        }
+        footer a { color: var(--fg-dim); text-decoration: none; }
+        footer a:hover { color: var(--fg); }
+        footer .sep { color: var(--border); }
+    </style>
+</head>
+<body>
+<div class="wrap">
+
+    <header>
+        <div class="brand-row">
+            <img class="brand-icon" src="media/icon.png" alt="" width="64" height="64">
+            <span class="logo">Shot and Tell</span>
+        </div>
+        <h1>Screenshots you can<br><span class="accent">point at.</span></h1>
+        <p class="tagline">Take a screenshot. Drop numbered marks on the bits you mean, type a line against each number, redact what shouldn't be seen. You get one image back — the shot on a background, a numbered legend beside it — so <strong>“the heading in ① is too big”</strong> means something to a colleague, or to a model that can only see pixels.</p>
+
+        <div class="download-row">
+            <div class="download-col">
+                <!-- APP-STORE-LINK
+                     Not on the App Store yet. When it is, replace the <span>
+                     below with the badge (an inline SVG, so nothing is fetched):
+
+                     <a class="cta" href="https://apps.apple.com/app/shot-and-tell/idXXXXXXXXXX">
+                         Download on the Mac App Store →
+                     </a>
+
+                     and change the meta line to "Free · Apple Silicon · macOS 26+".
+                     Then remove the .preview-note paragraph below the chips and
+                     update the "Coming soon" card at the bottom of the page. -->
+                <span class="cta pending">Mac App Store <span class="soon">Coming soon</span></span>
+                <span class="col-meta">Free · No in-app purchases · Apple Silicon · macOS 26+</span>
+            </div>
+            <a class="secondary-link" href="https://github.com/robgough/shotandtell">Source on GitHub →</a>
+        </div>
+
+        <ul class="feature-chips" aria-label="At a glance">
+            <li class="chip">Can't reach the internet</li>
+            <li class="chip">Numbered pins, arrows and boxes</li>
+            <li class="chip">Redactions baked into the export</li>
+            <li class="chip">Legend on the clipboard as text</li>
+            <li class="chip"><kbd>⌃⇧S</kbd> from any app</li>
+            <li class="chip">Free, MIT licensed</li>
+        </ul>
+
+        <p class="preview-note">
+            <strong>Not released yet.</strong> The app is built and headed for the Mac App Store; the button above becomes real once it's through review. Until then the source is on <a href="https://github.com/robgough/shotandtell">GitHub</a>, and feedback is welcome at <a href="mailto:hello@robgough.net">hello@robgough.net</a>.
+        </p>
+    </header>
+
+    <figure class="shot demo">
+        <div class="demo-frame">
+            <img src="media/example.png" width="1800" height="971"
+                 alt="The exported image: a Finder window of app icons on a warm dark background. Four red numbered markers sit on the icons, and a legend on the right headed App Grid reads 1 these two icons are hard to tell apart, 2 this label wraps and the rest do not, 3 row spacing is tighter here than above, 4 this icon looks low resolution.">
+        </div>
+        <figcaption><strong>What you get.</strong> One PNG: the screenshot on a background, the marks on it, and the legend that goes with them. No branding on it.</figcaption>
+    </figure>
+
+    <section id="how">
+        <h2>How it works</h2>
+        <ol class="steps">
+            <li class="step">
+                <div>
+                    <h3>Start a capture</h3>
+                    <p>Click the Dock icon, pick <strong>New Capture</strong> from the menu bar, or press <kbd>⌃⇧S</kbd> from any app. The screen freezes while you choose. There's an optional 3, 5 or 10 second timer if you need to get a menu open first.</p>
+                </div>
+            </li>
+            <li class="step">
+                <div>
+                    <h3>Choose what to take</h3>
+                    <p>Drag out a region, click a window, or take a whole screen. <strong>Space</strong> switches between dragging and picking a window, the way the system tool does, and the overlay names the window you're about to take. A magnifier shows the exact pixel under the crosshair, with its coordinates, so you land on an edge rather than near it.</p>
+                </div>
+            </li>
+            <li class="step">
+                <div>
+                    <h3>Mark it up</h3>
+                    <p>Numbered pins, numbered arrows, numbered boxes, and redaction blocks for anything that shouldn't be seen. The moment a mark lands, the cursor is in its legend row: type, press Escape, click the next thing.</p>
+                </div>
+            </li>
+            <li class="step">
+                <div>
+                    <h3>Done</h3>
+                    <p><strong>Copy &amp; Close</strong> puts the composed image on the clipboard with the legend alongside it as text, and saves a PNG to Pictures › Shot and Tell. Paste into a chat and the picture arrives; paste into a text field and the words do.</p>
+                </div>
+            </li>
+        </ol>
+
+        <div class="shots-after-steps">
+            <figure class="shot">
+                <div class="demo-frame">
+                    <img src="media/capture.png" width="1800" height="1194" loading="lazy" decoding="async"
+                         alt="Choosing a region: a dimmed Finder window with a crosshair across it, a round magnifier loupe showing the enlarged pixels under the pointer, the coordinates 982, 367 beneath it, and a hint reading Space to pick a window instead.">
+                </div>
+                <figcaption><strong>Choosing.</strong> The loupe shows the pixel under the pointer and where it is. Space swaps to picking a window instead.</figcaption>
+            </figure>
+            <figure class="shot">
+                <div class="demo-frame">
+                    <img src="media/editor.png" width="1800" height="1145" loading="lazy" decoding="async"
+                         alt="The editor window: a toolbar with Select, Pin, Arrow, Box and Redact tools and their shortcut keys, the captured Finder window on a warm dark background with four numbered red markers, a marker colour and Background picker at the bottom, and a legend panel on the right headed App Grid with a typed description against each number and Copy and Copy & Close buttons above it.">
+                </div>
+                <figcaption><strong>The editor.</strong> What you see is what gets exported. Tools in the toolbar, the legend in a resizable inspector on the right.</figcaption>
+            </figure>
+        </div>
+    </section>
+
+    <section id="what">
+        <h2>What it does</h2>
+        <p class="lede">The point is that a number on the picture always has words to go with it. Most of the rest is getting out of the way.</p>
+        <p>Everything below runs on your Mac, with nothing sent anywhere.</p>
+
+        <div class="features pair">
+            <div class="feature">
+                <h3>One number, one meaning</h3>
+                    <p>Pins, arrows and boxes share a single sequence, in the order you made them. Delete ② and everything after it renumbers, on the picture and in the legend. Reorder with <kbd>⌥⌘↑</kbd> and <kbd>⌥⌘↓</kbd>, or from the menu on a number.</p>
+            </div>
+            <div class="feature">
+                <h3>The words travel with the picture</h3>
+                    <p>Copy puts the image on the clipboard and the legend on it as text at the same time. A model reads text in the prompt directly; it has to squint at text in an image. <kbd>⇧⌘C</kbd> copies just the legend — a title and a numbered list.</p>
+            </div>
+            <div class="feature">
+                <h3>Redact before you share</h3>
+                    <p>Redaction blocks are painted into the exported image as solid fills. Whatever was underneath isn't in the file and isn't on the clipboard.</p>
+            </div>
+            <div class="feature">
+                <h3>Marks can sit outside the shot</h3>
+                    <p>Pointing at something right on an edge? Marks can go in the background beside the screenshot, and the canvas grows to fit them. They can be moved and resized by their handles after they're drawn.</p>
+            </div>
+            <div class="feature">
+                <h3>Keyboard first</h3>
+                    <p><kbd>V</kbd>, <kbd>P</kbd>, <kbd>A</kbd>, <kbd>B</kbd> and <kbd>R</kbd> pick a tool. Placing a mark drops you into its description and then back to Select, so the next click picks something up rather than making another one. Clicking a description highlights its mark; selecting a mark scrolls its description into view.</p>
+            </div>
+            <div class="feature">
+                <h3>A colour that shows up</h3>
+                    <p>Eight marker presets or any colour from the system picker, per shot, because red marks on a red screenshot can't be seen. The number inside a marker switches to dark automatically on pale colours.</p>
+            </div>
+            <div class="feature">
+                <h3>A background that suits</h3>
+                    <p>Neutral, one of four gradients, a flat tone, or none — light or dark, chosen per shot with a default in Settings. The framing never touches the screenshot's own pixels: the hairline sits outside the image, so every captured pixel survives the export exactly as taken.</p>
+            </div>
+            <div class="feature">
+                <h3>A title, suggested</h3>
+                    <p>If Apple Intelligence is available, the on-device model suggests a title from the screenshot itself. It runs on your Mac; nothing is sent anywhere. If it isn't available, the field stays empty and you type one.</p>
+            </div>
+            <div class="feature">
+                <h3>The last capture comes back</h3>
+                    <p>Closed the editor by mistake, or thought of one more thing to point at? The menu bar reopens the last capture, marks and all. It can also reveal the last saved PNG in the Finder.</p>
+            </div>
+            <div class="feature">
+                <h3>Sized for pasting</h3>
+                    <p>Exports at 2× with the long edge capped around 2400 points, so files stay small enough to drop into a chat. A long legend flows into columns rather than running off the bottom. Both are adjustable in Settings.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="privacy">
+        <h2>Nothing leaves your Mac</h2>
+        <p class="lede">This is a tool for handing screenshots to other people and to AI models. It's worth being precise about what it does on its own, which is nothing.</p>
+
+        <div class="privacy-card">
+            <h3>It cannot reach the internet.</h3>
+            <p>Shot and Tell ships without the macOS network entitlement. Inside the App Store sandbox, that means the app is not able to open a connection — not for updates, not for analytics, not for anything.</p>
+            <p>That isn't a promise in a description field. It's a capability the app doesn't have, and you can check it: the entitlements are in the <a href="https://github.com/robgough/shotandtell/blob/main/Sources/ShotAndTell/ShotAndTell.entitlements">source</a>.</p>
+        </div>
+
+        <ul class="privacy-list">
+            <li><strong>No telemetry, no analytics, no account.</strong> There is nothing to sign in to and nothing counting you.</li>
+            <li><strong>Redactions are composited in.</strong> A redaction block is an opaque fill in the exported image. The pixels underneath never reach the clipboard or the file.</li>
+            <li><strong>The original capture is never written to disk.</strong> It's held in memory while you work. The only file the app writes is the composed export — to Pictures › Shot and Tell, or a folder you choose. Saving can be turned off.</li>
+            <li><strong>Title suggestions run on the device.</strong> They use Apple's on-device model through the Foundation Models framework, and only if Apple Intelligence is on. Nothing goes to a server. (There is no network entitlement, so it couldn't.)</li>
+            <li><strong>One permission.</strong> macOS asks for Screen &amp; System Audio Recording the first time you capture, because that is how any app reads the screen. No Accessibility access is needed. Nothing is captured until you start a capture.</li>
+        </ul>
+        <p class="privacy-more">The longer version is on the <a href="privacy.html">privacy page</a>.</p>
+    </section>
+
+    <section id="why" class="author">
+        <h2>Why I built this</h2>
+        <div class="author-text">
+            <p>I'm <a href="https://robgough.net"><strong>Rob Gough</strong></a> — a tech advisor and fractional CTO. I'm also building <a href="https://stayupfront.com">Stay Upfront</a>, support and incident management for B2B SaaS companies.</p>
+            <p>I made this because describing <em>where</em> on a screenshot I meant was taking longer than the screenshot saved. “The button on the left — no, under the thing that looks like a gear” is a nuisance for a colleague and a coin toss for a model that only sees pixels. A number on the picture and the same number next to a sentence takes the guessing out, and putting the sentence on the clipboard as text means the model reads it rather than reconstructing it from an image.</p>
+            <p>It's a small tool that does one thing. I hope it's useful.</p>
+        </div>
+    </section>
+
+    <section id="faq" class="faq">
+        <h2>FAQ</h2>
+
+        <details>
+            <summary>Does it work with ChatGPT, Claude, and the rest?</summary>
+            <p>Anywhere you can paste an image. The composed PNG goes on the clipboard, and the legend goes on it as text at the same time — a chat box takes the picture, a plain text field takes the words. If you want both in one message, paste the image, then <kbd>⇧⌘C</kbd> in the editor and paste again for the text.</p>
+        </details>
+
+        <details>
+            <summary>Do I need Apple Intelligence?</summary>
+            <p>No. It's used for one thing — suggesting a title from the screenshot — and only when the on-device model can look at images, which needs macOS 27 or later with Apple Intelligence turned on. On macOS 26, or with it off, the title field stays empty and you type one. Everything else is the same.</p>
+        </details>
+
+        <details>
+            <summary>Why does it ask for Screen Recording permission?</summary>
+            <p>Because that is the only way macOS lets an app read what's on screen, screenshot tools included. Shot and Tell uses Apple's ScreenCaptureKit and only reads the screen when you start a capture. You can grant or revoke it any time in System Settings › Privacy &amp; Security › Screen &amp; System Audio Recording. It never asks for Accessibility.</p>
+        </details>
+
+        <details>
+            <summary>Where does the original screenshot go?</summary>
+            <p>Nowhere. The capture is held in memory while the editor is open, and after you close it so you can reopen it from the menu bar — until the next capture or until you quit. It is never written to disk. The only file the app writes is the composed export, to Pictures › Shot and Tell or a folder you pick in Settings, and you can turn saving off and just use the clipboard.</p>
+        </details>
+
+        <details>
+            <summary>Can I change the shortcut?</summary>
+            <p>Yes, in Settings. It's <kbd>⌃⇧S</kbd> to begin with because ⇧⌘3, 4 and 5 are already taken by the system screenshot tool. If a shortcut can't be registered — usually because another app has it — the recorder says so rather than silently binding nothing.</p>
+        </details>
+
+        <details>
+            <summary>Is it open source?</summary>
+            <p>Yes, MIT licensed, on <a href="https://github.com/robgough/shotandtell">GitHub</a>. If you'd rather build it than wait for the App Store: <code>brew install xcodegen</code>, then <code>./gen</code> and open the project in Xcode. You'll need your own signing identity.</p>
+        </details>
+
+        <details>
+            <summary>Why is it free?</summary>
+            <p>No catch — no account, no telemetry, no in-app purchases, no “Pro” tier waiting behind the features you actually want. I built it because I wanted it, and it doubles as a working example of the kind of thing I build. If it's useful to you, that's the point.</p>
+        </details>
+    </section>
+
+    <section id="requirements" class="reqs-section">
+        <h2>Requirements</h2>
+        <p class="reqs">
+            <span><strong>Apple Silicon</strong> Mac</span>
+            <span><strong>macOS 26</strong> or newer</span>
+            <span><strong>Screen Recording</strong> permission, granted on first capture</span>
+        </p>
+        <p class="table-footnote">Apple Intelligence is optional. With it on, and on macOS 27 or later, titles are suggested from the screenshot; without it you type them. Nothing is downloaded, because nothing can be.</p>
+    </section>
+
+    <section class="final-cta" aria-label="Coming soon">
+        <h2>Coming soon</h2>
+        <p>Shot and Tell is headed for the Mac App Store. Free, no in-app purchases, and it can't phone home. The download button in the header goes live when it's through review.</p>
+        <!-- When the App Store link is live, the badge from the hero
+             (APP-STORE-LINK above) can be repeated here so a reader who has
+             scrolled the whole page doesn't have to go back up. -->
+        <div class="download-row">
+            <div class="download-col" style="align-items: center;">
+                <a class="cta" href="https://github.com/robgough/shotandtell">Watch the repo on GitHub →</a>
+                <span class="col-meta">Or build it yourself — see the README</span>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <a href="https://github.com/robgough/shotandtell">Source on GitHub</a>
+        <span class="sep">·</span>
+        <a href="privacy.html">Privacy</a>
+        <span class="sep">·</span>
+        <a href="https://robgough.net">robgough.net</a>
+    </footer>
+</div>
+</body>
+</html>
