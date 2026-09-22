@@ -157,7 +157,7 @@ wide("win.png",
 
 wide("export.png",
      "One image, with the words attached",
-     "The shot on a background, the legend beside it, on the clipboard and ready to paste.",
+     "Hand it to an AI agent, a colleague or a customer — every point already has a number.",
      radius: 20, to: "02-result.png")
 
 wide("export2.png",

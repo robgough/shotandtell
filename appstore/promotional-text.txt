@@ -1,1 +1,1 @@
-Take a screenshot and annotate it — numbered markers, arrows, boxes, redactions. You get back one image with a numbered legend beside it, ready to paste.
+Take a screenshot, number the parts that matter, say what’s wrong with each one. You get one image back — ready for an AI agent, a colleague or a customer.

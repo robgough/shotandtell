@@ -5,8 +5,8 @@ Connect without the line breaks a Markdown table would put in them:
 
 | Field | File | Length |
 | --- | --- | --- |
-| Promotional Text | [`promotional-text.txt`](promotional-text.txt) | 153 / 170 |
-| Description | [`description.txt`](description.txt) | 2633 / 4000 |
+| Promotional Text | [`promotional-text.txt`](promotional-text.txt) | 155 / 170 |
+| Description | [`description.txt`](description.txt) | 3323 / 4000 |
 | Keywords | [`keywords.txt`](keywords.txt) | 98 / 100 |
 | App Review notes | [`review-notes.txt`](review-notes.txt) | 1549 |
 

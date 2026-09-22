@@ -1,6 +1,16 @@
 Shot and Tell takes a screenshot and lets you annotate it. Drop a numbered marker on something, draw an arrow at it, or box a whole section off. Type a line against each number, and you get back one image with the legend beside it.
 
-That’s the whole idea. “The heading in ① is too big” means something to a colleague, and it means something to a model that can only see pixels.
+WHAT IT’S FOR
+
+“The button on the right — no, the other one, above the total” is a sentence nobody should have to write. Put a number on the thing instead, say what’s wrong with it underneath, and there is nothing left to misread.
+
+Who’s reading it doesn’t change much:
+
+An AI agent or a chat model can only see pixels. A number on the picture and the same number in the text gives it something to hold onto, rather than a paragraph describing where everything is.
+
+A colleague gets the design feedback, the bug report or the “check this before it ships” as one image — and every point already has a number to reply to.
+
+A customer or a supplier gets “here’s the screen, here’s the field I mean”, with anything that isn’t their business blacked out before the image leaves your Mac.
 
 HOW IT GOES
 
@@ -10,7 +20,7 @@ HOW IT GOES
 
 3. Drag redaction blocks over anything that shouldn’t leave your machine.
 
-4. Copy & Close puts the finished image on the clipboard and saves a PNG. Paste into a chat and the picture arrives; paste into a text field and the words do.
+4. Copy & Close puts the finished image on the clipboard and saves a PNG. Paste it into a prompt, a pull request, a ticket, a chat or an email. Paste into a text field instead and the words arrive on their own.
 
 ONE NUMBER, ONE MEANING
 
@@ -26,7 +36,7 @@ Redaction blocks are painted into the exported image as solid fill. Whatever was
 
 MADE TO LOOK RIGHT
 
-Marks can sit in the background beside the screenshot, for pointing at something right on an edge. Eight marker colours and a custom picker, four gradients and three flat tones for the background, light or dark following the system. Long legends flow into columns instead of running off the bottom.
+Marks can sit in the background beside the screenshot, for when the thing you’re marking is right on an edge. Eight marker colours and a custom picker, four gradients and three flat tones for the background, light or dark following the system. Long legends flow into columns instead of running off the bottom.
 
 IT CAN’T PHONE HOME
 
