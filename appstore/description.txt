@@ -6,7 +6,7 @@ WHAT IT’S FOR
 
 Who’s reading it doesn’t change much:
 
-An AI agent or a chat model can only see pixels. A number on the picture and the same number in the text gives it something to hold onto, rather than a paragraph describing where everything is.
+An AI agent gets the picture and the words together. A number on the screenshot and the same number in the prompt says exactly which part you mean, so it understands you straight away.
 
 A colleague gets the design feedback, the bug report or the “check this before it ships” as one image — and every point already has a number to reply to.
 
@@ -28,7 +28,7 @@ Pins, arrows and boxes share a single sequence, in the order you made them. Dele
 
 THE WORDS TRAVEL WITH THE PICTURE
 
-Copying can put the legend on the clipboard as text at the same time as the image. A model reads text in a prompt directly; it has to squint at text in a picture. ⇧⌘C copies just the legend — a title and a numbered list.
+Copying can put the legend on the clipboard as text at the same time as the image, so the picture and the words arrive together. ⇧⌘C copies just the legend — a title and a numbered list.
 
 REDACT BEFORE YOU SHARE
 
