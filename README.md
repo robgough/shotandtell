@@ -11,6 +11,9 @@ Menubar app with a Dock icon. Click the Dock icon or pick *New Capture* to start
 
 macOS 26+. Mac App Store. Free.
 
+**Try the beta:** [join on TestFlight](https://testflight.apple.com/join/nZ4japFW) while the
+App Store release is in review.
+
 ## How it works
 
 1. Start a capture — click the Dock icon, pick one from the menu bar, or press
