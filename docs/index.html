@@ -21,7 +21,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Shot and Tell — Annotate screenshots for AI</title>
-    <meta name="description" content="A macOS screenshot tool for talking to AI about pictures. Mark up a capture with numbered pins, arrows and boxes, describe each one, redact what shouldn't be seen, and get one image with a numbered legend beside it. No network access at all. Free, Mac App Store, macOS 26+.">
+    <meta name="description" content="A macOS screenshot tool for showing someone exactly what you mean. Mark up a capture with numbered pins, arrows and boxes, describe each one, redact what shouldn't be seen, and get one image with a numbered legend beside it — for an AI agent, a colleague or a customer. No network access at all. Free, Mac App Store, macOS 26+.">
     <link rel="canonical" href="https://shotandtell.robgough.net/">
     <link rel="icon" type="image/png" href="media/icon-180.png">
     <link rel="apple-touch-icon" href="media/icon-180.png">
@@ -33,7 +33,7 @@
     <meta property="og:site_name" content="Shot and Tell">
     <meta property="og:url" content="https://shotandtell.robgough.net/">
     <meta property="og:title" content="Shot and Tell — Annotate screenshots for AI">
-    <meta property="og:description" content="Numbered marks on a screenshot, a numbered legend beside it, one image out. Redact what's private. The app can't reach the internet. Free for macOS 26+, coming to the Mac App Store.">
+    <meta property="og:description" content="Numbered marks on a screenshot, a numbered legend beside it, one image out — for an AI agent, a colleague or a customer. Redact what's private. The app can't reach the internet. Free for macOS 26+, coming to the Mac App Store.">
     <meta property="og:image" content="https://shotandtell.robgough.net/media/example.png">
     <meta property="og:image:secure_url" content="https://shotandtell.robgough.net/media/example.png">
     <meta property="og:image:type" content="image/png">
@@ -45,7 +45,7 @@
     <!-- Twitter / X -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Shot and Tell — Annotate screenshots for AI">
-    <meta name="twitter:description" content="Numbered marks on a screenshot, a numbered legend beside it, one image out. Redact what's private. The app can't reach the internet. Free for macOS 26+, coming to the Mac App Store.">
+    <meta name="twitter:description" content="Numbered marks on a screenshot, a numbered legend beside it, one image out — for an AI agent, a colleague or a customer. Redact what's private. The app can't reach the internet. Free for macOS 26+, coming to the Mac App Store.">
     <meta name="twitter:image" content="https://shotandtell.robgough.net/media/example.png">
     <meta name="twitter:image:alt" content="A screenshot of a folder of app icons on a dark background, with four numbered red markers on it and a numbered legend to the right describing each one.">
 
@@ -55,7 +55,7 @@
         "@context": "https://schema.org",
         "@type": "SoftwareApplication",
         "name": "Shot and Tell",
-        "description": "A macOS screenshot tool for talking to AI about pictures. Numbered pins, arrows and boxes with a legend beside the image; redactions composited into the export; no network access.",
+        "description": "A macOS screenshot tool for showing someone exactly what you mean — an AI agent, a colleague or a customer. Numbered pins, arrows and boxes with a legend beside the image; redactions composited into the export; no network access.",
         "url": "https://shotandtell.robgough.net/",
         "applicationCategory": "UtilitiesApplication",
         "operatingSystem": "macOS 26+",
@@ -403,6 +403,10 @@
             gap: 14px;
         }
         .features.pair { grid-template-columns: 1fr 1fr; }
+        .features.trio { grid-template-columns: repeat(3, 1fr); }
+        @media (max-width: 860px) {
+            .features.trio { grid-template-columns: 1fr; }
+        }
         @media (max-width: 640px) {
             .features.pair { grid-template-columns: 1fr; }
         }
@@ -708,6 +712,30 @@
         <figcaption><strong>What you get.</strong> One PNG: the screenshot on a background, the marks on it, and the legend that goes with them. No branding on it.</figcaption>
     </figure>
 
+    <!-- The case for the thing, before the tour of the thing. Three cards
+         rather than a paragraph because the point is that the same image
+         does three different jobs. -->
+    <section id="for">
+        <h2>What it's for</h2>
+        <p class="lede">“The button on the right — no, the other one, above the total” is a sentence nobody should have to write. Put a number on the thing instead, say what's wrong with it underneath, and there's nothing left to misread.</p>
+        <p>Who's on the other end doesn't change much.</p>
+
+        <div class="features trio">
+            <div class="feature">
+                <h3>An AI agent</h3>
+                <p>A model can only see pixels. A number on the picture and the same number in the text beats a paragraph describing where everything is.</p>
+            </div>
+            <div class="feature">
+                <h3>A colleague</h3>
+                <p>Design feedback, a bug report, a “check this before it ships” — one image, and every point already has a number to reply to.</p>
+            </div>
+            <div class="feature">
+                <h3>A customer</h3>
+                <p>“Here's the screen, here's the field I mean.” Anything that isn't their business is blacked out before the image leaves your Mac.</p>
+            </div>
+        </div>
+    </section>
+
     <section id="how">
         <h2>How it works</h2>
         <ol class="steps">
@@ -775,7 +803,7 @@
             </div>
             <div class="feature">
                 <h3>Marks can sit outside the shot</h3>
-                    <p>Pointing at something right on an edge? Marks can go in the background beside the screenshot, and the canvas grows to fit them. They can be moved and resized by their handles after they're drawn.</p>
+                    <p>Marking something right on an edge? Marks can go in the background beside the screenshot, and the canvas grows to fit them. They can be moved and resized by their handles after they're drawn.</p>
             </div>
             <div class="feature">
                 <h3>Keyboard first</h3>
