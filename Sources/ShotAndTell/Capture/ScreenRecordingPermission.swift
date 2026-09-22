@@ -31,26 +31,34 @@ enum ScreenRecordingPermission {
     }
 
     /// True if the app may capture. Asks if it hasn't been asked, explains and
-    /// offers System Settings if it has been refused.
+    /// offers System Settings once asking has plainly not worked.
     static func ensureGranted() async -> Bool {
         if isGranted { return true }
 
         // The system prompt is raised asynchronously and `request()` answers
-        // with the state *now*, so a false on the very first ask means "the
-        // prompt is on screen, waiting" rather than "no". Stacking our own
-        // explanation on top of it at that moment gives the user two dialogs
-        // about the same thing, one of them in front of the one that matters.
-        let hasAskedBefore = UserDefaults.standard.bool(forKey: hasAskedKey)
-        UserDefaults.standard.set(true, forKey: hasAskedKey)
+        // with the state *now*, so a false result means either "the prompt is
+        // on screen, waiting" or "already refused" — and there's no API to tell
+        // those apart. Putting our own modal up on a false would therefore
+        // sometimes land it on top of the system one, where dismissing ours
+        // takes the real prompt with it.
+        //
+        // So: the first refusal in a launch is always silent, and the
+        // explanation waits for a second attempt. By then the prompt has been
+        // answered or was never there, and ours can't cover anything. This is
+        // tracked in memory rather than in UserDefaults on purpose — a stored
+        // flag drifts out of step with TCC the moment the grant is reset or the
+        // bundle identifier changes, and then the two dialogs stack again.
+        let alreadyAskedThisLaunch = hasRequestedThisLaunch
+        hasRequestedThisLaunch = true
 
         if await request() { return true }
-        guard hasAskedBefore else { return false }
+        guard alreadyAskedThisLaunch else { return false }
 
         explainDenial()
         return false
     }
 
-    private static let hasAskedKey = "hasAskedForScreenRecording"
+    private static var hasRequestedThisLaunch = false
 
     /// Shown after ScreenCaptureKit has refused.
     static func explainDenial() {
