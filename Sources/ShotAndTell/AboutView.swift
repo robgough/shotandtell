@@ -33,15 +33,12 @@ struct AboutView: View {
 
     private var header: some View {
         HStack(alignment: .center, spacing: 14) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(Color(nsColor: .systemRed).opacity(0.18))
-                    .frame(width: 56, height: 56)
-                Image(systemName: "1.circle.fill")
-                    .symbolRenderingMode(.hierarchical)
-                    .foregroundStyle(Color(nsColor: .systemRed))
-                    .font(.system(size: 26, weight: .semibold))
-            }
+            // The actual app icon, not an approximation of it. NSApp holds the
+            // one the system is already showing in the Dock.
+            Image(nsImage: NSApp.applicationIconImage)
+                .resizable()
+                .frame(width: 72, height: 72)
+                .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text("Shot and Tell")
@@ -64,7 +61,7 @@ struct AboutView: View {
 
     private var author: some View {
         section("Author") {
-            Text("I'm **Rob Gough** — a tech advisor and fractional CTO. I'm also building **Stay Upfront**, support and incident management for B2B SaaS companies.")
+            Text("I'm **Rob Gough** — a tech advisor and fractional CTO. I'm also building **StayUpfront**, support and incident management for B2B SaaS companies.")
             Text("I made this because describing *where* on a screenshot I meant was taking longer than the screenshot saved.")
             HStack(spacing: 14) {
                 Link(destination: URL(string: "https://stayupfront.com")!) {

@@ -593,6 +593,51 @@
         font-size: 0.82rem;
         color: var(--muted);
     }
+        .nowrap { white-space: nowrap; }
+        .promo {
+            display: block;
+            margin: 26px 0 0;
+            padding: 22px 24px;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            /* Its own warmth, so it reads as a different voice from the page
+               around it without shouting. */
+            background:
+                radial-gradient(120% 140% at 0% 0%, color-mix(in oklab, var(--accent) 9%, transparent), transparent 60%),
+                var(--card);
+            text-decoration: none;
+            color: inherit;
+            transition: border-color 0.15s ease, transform 0.15s ease;
+        }
+        .promo:hover {
+            border-color: color-mix(in oklab, var(--accent) 45%, var(--border));
+            transform: translateY(-1px);
+        }
+        .promo-kicker {
+            display: block;
+            font-size: 0.72rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--fg-faint);
+            margin-bottom: 6px;
+        }
+        .promo-name {
+            display: block;
+            font-family: "SF Pro Rounded", -apple-system, system-ui, sans-serif;
+            font-size: 1.35rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+        .promo-line {
+            display: block;
+            color: var(--fg-dim);
+            margin-bottom: 12px;
+        }
+        .promo-cta {
+            display: inline-block;
+            font-weight: 600;
+            color: var(--accent);
+        }
 </style>
     <!-- Fathom - beautiful, simple website analytics -->
     <script src="https://cdn.usefathom.com/script.js" data-site="ZXVMETVO" defer></script>
@@ -769,10 +814,18 @@
     <section id="why" class="author">
         <h2>Why I built this</h2>
         <div class="author-text">
-            <p>I'm <a href="https://robgough.net"><strong>Rob Gough</strong></a> — a tech advisor and fractional CTO. I'm also building <a href="https://stayupfront.com">Stay Upfront</a>, support and incident management for B2B SaaS companies.</p>
+            <p>I'm <a href="https://robgough.net"><strong>Rob Gough</strong></a> — a tech advisor and fractional CTO. I'm also building <a href="https://stayupfront.com" class="nowrap">StayUpfront</a>, support and incident management for B2B SaaS companies.</p>
             <p>I made this because describing <em>where</em> on a screenshot I meant was taking longer than the screenshot saved. “The button on the left — no, under the thing that looks like a gear” is a nuisance for a colleague and a coin toss for a model that only sees pixels. A number on the picture and the same number next to a sentence takes the guessing out, and putting the sentence on the clipboard as text means the model reads it rather than reconstructing it from an image.</p>
             <p>It's a small tool that does one thing. I hope it's useful.</p>
         </div>
+
+        <!-- Deliberately looks like an ad, because it is one. -->
+        <a class="promo" href="https://stayupfront.com">
+            <span class="promo-kicker">Also from me</span>
+            <span class="promo-name nowrap">StayUpfront</span>
+            <span class="promo-line">Support inbox, incidents, status pages and docs in one place — for B2B SaaS teams who are tired of stitching four tools together.</span>
+            <span class="promo-cta">stayupfront.com&nbsp;&rarr;</span>
+        </a>
     </section>
 
     <section id="faq" class="faq">

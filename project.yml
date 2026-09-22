@@ -87,7 +87,11 @@ targets:
         # which an LSUIElement accessory app could never offer.
         LSUIElement: false
         LSMinimumSystemVersion: "26.0"
-        CFBundleName: ShotAndTell
+        # Both, and both with the spaces: the *menu bar* takes the app's name
+        # from CFBundleName, not CFBundleDisplayName, so leaving this as
+        # "ShotAndTell" put the wrong spelling in the one place every Mac user
+        # looks. Comfortably inside the 15-character guidance either way.
+        CFBundleName: Shot and Tell
         CFBundleDisplayName: Shot and Tell
         # There is no MainMenu.xib — `@main` lives on AppDelegate and the menu
         # bar is built in code (see MainMenu.swift). NSApplication is the default
