@@ -1,0 +1,67 @@
+<!doctype html><meta charset="utf-8"><title>Orchard</title>
+<style>
+:root{--ink:#16171c;--mut:#6b7280;--line:#e6e7eb;--bg:#f6f7f9;--brand:#3b5bdb}
+*{box-sizing:border-box;margin:0}
+body{font:15px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui;color:var(--ink);background:#fff;display:grid;grid-template-columns:232px 1fr;height:100vh;overflow:hidden}
+aside{background:var(--bg);border-right:1px solid var(--line);padding:22px 16px}
+.logo{display:flex;align-items:center;gap:9px;font-weight:650;font-size:16px;margin-bottom:26px}
+.dot{width:22px;height:22px;border-radius:7px;background:linear-gradient(135deg,#3b5bdb,#7048e8)}
+nav a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;color:#4b5563;text-decoration:none;font-size:14px;margin-bottom:2px}
+nav a.on{background:#fff;color:var(--ink);font-weight:560;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+nav a i{width:15px;height:15px;border-radius:4px;background:#c9ccd4;display:inline-block}
+nav a.on i{background:var(--brand)}
+.sec{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#9ca3af;margin:22px 0 8px 10px}
+main{padding:26px 32px;overflow:hidden}
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+h1{font-size:23px;font-weight:650;letter-spacing:-.01em}
+.sub{color:var(--mut);font-size:13px;margin-top:3px}
+.btns{display:flex;gap:8px}
+button{font:inherit;font-size:13.5px;padding:7px 14px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--ink)}
+button.p{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:540}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:26px}
+.card{border:1px solid var(--line);border-radius:12px;padding:15px 16px}
+.card .k{font-size:12.5px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .v{font-size:27px;font-weight:660;letter-spacing:-.02em;margin-top:7px}
+.card .d{font-size:12px;margin-top:5px;color:#16a34a}
+.card .d.neg{color:#dc2626}
+.chart{border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-bottom:26px}
+.chart h2{font-size:15px;font-weight:600;margin-bottom:16px}
+.bars{display:flex;align-items:flex-end;gap:14px;height:132px}
+.bars div{flex:1;background:#dde3f7;border-radius:5px 5px 0 0}
+.bars div:nth-child(7){background:var(--brand)}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{text-align:left;font-weight:560;color:var(--mut);font-size:12px;padding:0 0 9px;border-bottom:1px solid var(--line)}
+td{padding:11px 0;border-bottom:1px solid #f1f2f5}
+tr:nth-child(3) td{padding:6px 0}
+.pill{font-size:11.5px;padding:3px 9px;border-radius:99px;background:#eef2ff;color:#4338ca}
+.pill.w{background:#fef3c7;color:#92400e}
+</style>
+<aside>
+  <div class="logo"><span class="dot"></span>Orchard</div>
+  <nav>
+    <a class="on"><i></i>Overview</a><a><i></i>Customers</a><a><i></i>Invoices</a><a><i></i>Reports</a>
+    <div class="sec">Workspace</div>
+    <a><i></i>Team</a><a><i></i>Integrations</a><a><i></i>Settings</a>
+  </nav>
+</aside>
+<main>
+  <header>
+    <div><h1>Overview</h1><div class="sub">Last 30 days · updated 4 minutes ago</div></div>
+    <div class="btns"><button>Export</button><button>New invoice</button></div>
+  </header>
+  <div class="cards">
+    <div class="card"><div class="k">Recurring revenue</div><div class="v">£48,210</div><div class="d">+6.4%</div></div>
+    <div class="card"><div class="k">Active customers</div><div class="v">1,284</div><div class="d">+2.1%</div></div>
+    <div class="card"><div class="k">Average contract value this quarter</div><div class="v">£376</div><div class="d neg">−1.8%</div></div>
+    <div class="card"><div class="k">Churn</div><div class="v">1.9%</div><div class="d">−0.3%</div></div>
+  </div>
+  <div class="chart"><h2>Revenue by week</h2>
+    <div class="bars"><div style="height:44%"></div><div style="height:57%"></div><div style="height:49%"></div><div style="height:68%"></div><div style="height:61%"></div><div style="height:79%"></div><div style="height:96%"></div><div style="height:72%"></div></div>
+  </div>
+  <table>
+    <tr><th>Customer</th><th>Plan</th><th>Contact</th><th>Renews</th><th>Status</th></tr>
+    <tr><td>Harbourlight Studio</td><td>Scale</td><td>fin@harbourlight.example</td><td>14 Oct</td><td><span class="pill">Active</span></td></tr>
+    <tr><td>Nine Elms Bakery</td><td>Team</td><td>accounts@nineelms.example</td><td>2 Nov</td><td><span class="pill w">Past due</span></td></tr>
+    <tr><td>Pellam &amp; Cross</td><td>Scale</td><td>ap@pellamcross.example</td><td>19 Nov</td><td><span class="pill">Active</span></td></tr>
+  </table>
+</main>

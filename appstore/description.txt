@@ -1,0 +1,37 @@
+Shot and Tell takes a screenshot, lets you put numbered marks on the parts you mean, and gives you back one image with a numbered legend beside it.
+
+That’s the whole idea. “The heading in ① is too big” means something to a colleague, and it means something to a model that can only see pixels.
+
+HOW IT GOES
+
+1. Press ⌃⇧S from any app, click the Dock icon, or pick New Capture from the menu bar. Drag out a region, click a window, or take a whole screen. Space swaps between dragging and picking a window, and a magnifier shows the exact pixel under the crosshair so you land on an edge rather than near it. There’s a 3, 5 or 10 second timer for when you need a menu open first.
+
+2. Drop numbered pins, arrows and boxes on the things you want to talk about. The cursor lands in the legend row the moment a mark does, so you type the description straight away and move on.
+
+3. Drag redaction blocks over anything that shouldn’t leave your machine.
+
+4. Copy & Close puts the finished image on the clipboard and saves a PNG. Paste into a chat and the picture arrives; paste into a text field and the words do.
+
+ONE NUMBER, ONE MEANING
+
+Pins, arrows and boxes share a single sequence, in the order you made them. Delete ② and everything after it renumbers, on the picture and in the legend. Reorder with ⌥⌘↑ and ⌥⌘↓.
+
+THE WORDS TRAVEL WITH THE PICTURE
+
+Copying can put the legend on the clipboard as text at the same time as the image. A model reads text in a prompt directly; it has to squint at text in a picture. ⇧⌘C copies just the legend — a title and a numbered list.
+
+REDACT BEFORE YOU SHARE
+
+Redaction blocks are painted into the exported image as solid fill. Whatever was underneath isn’t in the file and isn’t on the clipboard.
+
+MADE TO LOOK RIGHT
+
+Marks can sit in the background beside the screenshot, for pointing at something right on an edge. Eight marker colours and a custom picker, four gradients and three flat tones for the background, light or dark following the system. Long legends flow into columns instead of running off the bottom.
+
+IT CAN’T PHONE HOME
+
+Shot and Tell ships without the network entitlement, so it cannot open a network connection at all. No account, no analytics, no uploads, no update checks. Your screenshots stay on your Mac.
+
+Free, no in-app purchases, no ads, no upsell. The source is on GitHub under the MIT licence.
+
+Requires an Apple Silicon Mac running macOS 26 or newer. macOS will ask for Screen Recording permission the first time you take a shot.

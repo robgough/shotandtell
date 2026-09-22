@@ -1,0 +1,14 @@
+{
+  "image": "/Users/robgough/Pictures/shotandtell-appstore-demo/subject2.png",
+  "scale": 2,
+  "title": "Billing page — before sending to support",
+  "background": "ember",
+  "marker": "teal",
+  "marks": [
+    {"kind":"redaction","x":0.040,"y":0.300,"x2":0.218,"y2":0.400},
+    {"kind":"redaction","x":0.590,"y":0.360,"x2":0.762,"y2":0.470},
+    {"kind":"pin","x":0.978,"y":0.082,"text":"This only ever downloads everything, so it should say ‘Download all’."},
+    {"kind":"box","x":0.886,"y":0.650,"x2":0.968,"y2":0.950,"text":"Right-align the amounts and move the currency up into the header."},
+    {"kind":"pin","x":0.640,"y":0.744,"text":"Colour alone isn’t enough here — ‘Paid’ needs an icon too."}
+  ]
+}

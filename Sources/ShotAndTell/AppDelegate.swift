@@ -42,6 +42,43 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Settings.shared.applyHotkey()
 
         Log.app.notice("Shot and Tell launched")
+
+        if let s = ProcessInfo.processInfo.environment["SHOTANDTELL_DEMO_SETTINGS"] {
+            SettingsWindowController.shared.show()
+            NSApp.activate(ignoringOtherApps: true)
+            let n = s.split(separator: ",").compactMap { Double($0) }
+            if let w = NSApp.windows.first(where: { $0.isVisible && $0.title.contains("Settings") }) {
+                Task { @MainActor in
+                    try? await Task.sleep(for: .seconds(2))
+                    if n.count >= 2 { w.setFrameOrigin(NSPoint(x: n[0], y: n[1])) }
+                    let f = w.frame
+                    FileHandle.standardError.write("SETTINGS_FRAME \(f.origin.x),\(f.origin.y),\(f.width),\(f.height) screen \(NSScreen.main?.frame.height ?? 0)\n".data(using: .utf8)!)
+                }
+            }
+        }
+
+        // TEMPORARY — marketing-shot tooling, not shipped.
+        if let composition = DemoLoader.load() {
+            let document = EditorDocument(capture: composition.capture)
+            document.composition = composition
+            let controller = EditorWindowController(document: document, onExported: { _ in }, onClose: { _ in })
+            editors.append(controller)
+            controller.show()
+            if let frame = ProcessInfo.processInfo.environment["SHOTANDTELL_DEMO_FRAME"] {
+                let n = frame.split(separator: ",").compactMap { Double($0) }
+                if n.count == 4 {
+                    controller.window?.setFrame(NSRect(x: n[0], y: n[1], width: n[2], height: n[3]), display: true)
+                }
+            }
+            NSApp.activate(ignoringOtherApps: true)
+            if let out = ProcessInfo.processInfo.environment["SHOTANDTELL_DEMO_EXPORT"] {
+                Task.detached {
+                    let rendered = try Compositor.render(composition, scale: 2)
+                    try PNGEncoder.encode(rendered.image, scale: 2).write(to: URL(fileURLWithPath: out))
+                    print("demo export written")
+                }
+            }
+        }
     }
 
     /// Clicking the Dock icon starts a capture. This is the whole reason the app

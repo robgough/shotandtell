@@ -1,0 +1,25 @@
+Shot and Tell is a screenshot annotation tool. You take a screenshot, place numbered marks on it, type a description against each number, and export one image with the screenshot on a background and the numbered legend beside it.
+
+To try it in about a minute:
+
+1. Launch the app. It puts an icon in the Dock and one in the menu bar.
+
+2. Press ⌃⇧S, or click the Dock icon. macOS will ask for Screen Recording permission — this is required, because the capture uses ScreenCaptureKit. Grant it, then press ⌃⇧S again.
+
+3. Drag out a region of the screen. The editor opens.
+
+4. Click anywhere on the screenshot to place mark ①, then type a description — the cursor is already in the right field.
+
+5. Press ⌘Return (Copy & Close). The composed image is on the clipboard, and a PNG has been written to Pictures › Shot and Tell.
+
+Notes:
+
+• Screen Recording is the only permission the app asks for, and only when you first take a screenshot. Nothing else in the app needs it.
+
+• There is no account and no sign-in. No data is collected.
+
+• The app has no com.apple.security.network.client entitlement, so it cannot make any network connection. There is nothing to configure and no server to reach.
+
+• The app deliberately has both a Dock icon and a menu bar item: clicking the Dock icon starts a capture, which is the fastest path from wanting a screenshot to having a crosshair.
+
+• Automatic title suggestion uses Apple’s on-device Foundation model. It is only available on macOS 27 and later, is skipped silently below that, and nothing else depends on it.

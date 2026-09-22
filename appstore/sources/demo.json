@@ -1,0 +1,13 @@
+{
+  "image": "/Users/robgough/Pictures/shotandtell-appstore-demo/subject.png",
+  "scale": 2,
+  "title": "Dashboard review",
+  "background": "neutral",
+  "marks": [
+    {"kind":"pin","x":0.985,"y":0.072,"text":"Make this the primary button — Export should be the quiet one."},
+    {"kind":"box","x":0.592,"y":0.150,"x2":0.780,"y2":0.338,"text":"This label is longer than the other three, so the row of cards looks uneven."},
+    {"kind":"arrow","x":0.640,"y":0.390,"x2":0.812,"y2":0.500,"text":"Colour the current week green — blue reads as ‘selected’ everywhere else."},
+    {"kind":"pin","x":0.928,"y":0.868,"text":"Past due should be red, and the whole row wants to be clickable."},
+    {"kind":"redaction","x":0.462,"y":0.778,"x2":0.622,"y2":0.958}
+  ]
+}

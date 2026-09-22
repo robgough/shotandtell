@@ -1,0 +1,1 @@
+screenshot,annotate,markup,redact,legend,callout,arrow,capture,numbered,feedback,prompt,bug report
