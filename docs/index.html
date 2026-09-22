@@ -15,6 +15,12 @@
     The download button is a "coming soon" placeholder. Search this file for
     APP-STORE-LINK — it's one spot, in the hero, with the replacement markup
     in the comment beside it.
+
+    TESTFLIGHT
+    The public beta link appears three times: the hero button, the "Not released
+    yet" note, and the card at the bottom. Search for TESTFLIGHT-LINK. When the
+    App Store link goes live, the hero button can go (or drop to a secondary
+    link) and the note and bottom card change as described at APP-STORE-LINK.
 -->
 <html lang="en">
 <head>
@@ -673,6 +679,13 @@
 
         <div class="download-row">
             <div class="download-col">
+                <!-- TESTFLIGHT-LINK: the one thing on this row you can do today,
+                     so it gets the solid button and the pending App Store one
+                     sits beside it. -->
+                <a class="cta" href="https://testflight.apple.com/join/nZ4japFW">Join the TestFlight beta →</a>
+                <span class="col-meta">Free · Needs the TestFlight app</span>
+            </div>
+            <div class="download-col">
                 <!-- APP-STORE-LINK
                      Not on the App Store yet. When it is, replace the <span>
                      below with the badge (an inline SVG, so nothing is fetched):
@@ -700,7 +713,7 @@
         </ul>
 
         <p class="preview-note">
-            <strong>Not released yet.</strong> The app is built and headed for the Mac App Store; the button above becomes real once it's through review. Until then the source is on <a href="https://github.com/robgough/shotandtell">GitHub</a>, and feedback is welcome at <a href="mailto:hello@robgough.net">hello@robgough.net</a>.
+            <strong>Not released yet.</strong> The app is built and headed for the Mac App Store; the button above becomes real once it's through review. Until then you can <a href="https://testflight.apple.com/join/nZ4japFW">try the beta through TestFlight</a> <!-- TESTFLIGHT-LINK -->, the source is on <a href="https://github.com/robgough/shotandtell">GitHub</a>, and feedback is welcome at <a href="mailto:hello@robgough.net">hello@robgough.net</a>.
         </p>
     </header>
 
@@ -908,7 +921,7 @@
 
         <details>
             <summary>Is it open source?</summary>
-            <p>Yes, MIT licensed, on <a href="https://github.com/robgough/shotandtell">GitHub</a>. If you'd rather build it than wait for the App Store: <code>brew install xcodegen</code>, then <code>./gen</code> and open the project in Xcode. You'll need your own signing identity.</p>
+            <p>Yes, MIT licensed, on <a href="https://github.com/robgough/shotandtell">GitHub</a>. If you'd rather build it than wait for the App Store or <a href="https://testflight.apple.com/join/nZ4japFW">join the beta</a>: <code>brew install xcodegen</code>, then <code>./gen</code> and open the project in Xcode. You'll need your own signing identity.</p>
         </details>
 
         <details>
@@ -929,15 +942,17 @@
 
     <section class="final-cta" aria-label="Coming soon">
         <h2>Coming soon</h2>
-        <p>Shot and Tell is headed for the Mac App Store. Free, no in-app purchases, and it can't phone home. The download button in the header goes live when it's through review.</p>
+        <p>Shot and Tell is headed for the Mac App Store. Free, no in-app purchases, and it can't phone home. Until it's through review, the beta is on TestFlight.</p>
         <!-- When the App Store link is live, the badge from the hero
              (APP-STORE-LINK above) can be repeated here so a reader who has
              scrolled the whole page doesn't have to go back up. -->
         <div class="download-row">
             <div class="download-col" style="align-items: center;">
-                <a class="cta" href="https://github.com/robgough/shotandtell">Watch the repo on GitHub →</a>
-                <span class="col-meta">Or build it yourself — see the README</span>
+                <!-- TESTFLIGHT-LINK -->
+                <a class="cta" href="https://testflight.apple.com/join/nZ4japFW">Join the TestFlight beta →</a>
+                <span class="col-meta">Free · Needs the TestFlight app</span>
             </div>
+            <a class="secondary-link" href="https://github.com/robgough/shotandtell">Source on GitHub →</a>
         </div>
     </section>
 
