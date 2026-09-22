@@ -25,7 +25,8 @@ don't.
 - Mark up a capture with numbered pins, numbered arrows, numbered boxes and
   redaction blocks, and describe each one in the legend beside it.
 - The finished shot is composed onto a background with the legend down the right
-  hand side, so a number on the image always has words to go with it.
+  hand side, so a number on the image always has words to go with it. A long
+  legend flows into columns rather than running off the bottom.
 - Press V, P, A, B or R to pick a tool, and start typing a description the
   moment a mark is placed — Escape sends focus back to the screenshot.
 - Marks can be moved and resized by their handles after they're drawn, and can

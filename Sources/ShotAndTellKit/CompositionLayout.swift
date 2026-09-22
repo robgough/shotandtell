@@ -62,10 +62,9 @@ nonisolated struct CompositionLayout: Sendable {
 
         let legendWidth = hasLegend ? legendColumnWidth(title: composition.title, entries: entriesText, beside: captureSize.width) : 0
 
-        // Measure the legend's height before the canvas exists, since the canvas
-        // has to be tall enough for whichever column is taller.
+        // Measured against the legend's *total* width further down, once the
+        // number of columns is known — the title spans all of them.
         let titleBlock = (!hasLegend || composition.title.isEmpty) ? nil : TextBlock(composition.title, font: titleFont(), colour: palette.ink)
-        let titleHeight = titleBlock?.height(constrainedTo: legendWidth) ?? 0
 
         let textWidth = legendWidth - badgeDiameter - badgeTextGap
         var entryHeights: [CGFloat] = []
@@ -76,15 +75,25 @@ nonisolated struct CompositionLayout: Sendable {
             entryHeights.append(max(block.height(constrainedTo: textWidth), badgeDiameter))
         }
 
-        var legendHeight: CGFloat = 0
-        if titleHeight > 0 { legendHeight += titleHeight + titleGap }
-        for (index, height) in entryHeights.enumerated() {
-            legendHeight += height
-            if index < entryHeights.count - 1 { legendHeight += entrySpacing }
-        }
-        if hasRedactionKey {
-            legendHeight += (legendHeight > 0 ? entrySpacing : 0) + badgeDiameter
-        }
+        // Stacked in one column, a long legend runs far past the bottom of the
+        // screenshot: fifty marks made an image three times taller than it was
+        // wide, with the capture stranded in the top corner and acres of empty
+        // background under it. Worse for the app's actual purpose than it looks,
+        // because a tall ribbon gets downscaled by whatever it's pasted into
+        // until the text is unreadable. So the legend flows into columns and the
+        // canvas grows sideways instead.
+        let columnTarget = max(captureSize.height, minimumColumnHeight)
+        let columns = entryColumns(heights: entryHeights, includingRedactionKey: hasRedactionKey, target: columnTarget)
+        let legendTotalWidth = CGFloat(columns.count) * legendWidth + CGFloat(columns.count - 1) * columnGap
+
+        let titleHeightAcrossLegend = titleBlock?.height(constrainedTo: legendTotalWidth) ?? 0
+        let tallestColumn = columns.map { column in
+            column.reduce(CGFloat(0)) { $0 + entryHeights[$1] } + CGFloat(max(0, column.count - 1)) * entrySpacing
+        }.max() ?? 0
+
+        var legendHeight = tallestColumn
+        if titleHeightAcrossLegend > 0 { legendHeight += titleHeightAcrossLegend + titleGap }
+        if hasRedactionKey { legendHeight += entrySpacing + badgeDiameter }
 
         // Marks are allowed to sit off the edge of the capture — an arrow
         // starting out in the background and pointing into a corner, a box drawn
@@ -98,7 +107,7 @@ nonisolated struct CompositionLayout: Sendable {
         let bottomPad = max(padding, overflow.bottom)
 
         let contentHeight = max(captureSize.height, legendHeight)
-        let canvasWidth = leftPad + rightPad + captureSize.width + (hasLegend ? columnGap + legendWidth : 0)
+        let canvasWidth = leftPad + rightPad + captureSize.width + (hasLegend ? columnGap + legendTotalWidth : 0)
         let canvasHeight = topPad + bottomPad + contentHeight
         let canvasSize = CGSize(width: canvasWidth, height: canvasHeight)
 
@@ -111,43 +120,51 @@ nonisolated struct CompositionLayout: Sendable {
             height: captureSize.height
         )
         let legendX = captureRect.maxX + columnGap
-        let legendRect = CGRect(x: legendX, y: contentTop - legendHeight, width: legendWidth, height: legendHeight)
+        let legendRect = CGRect(x: legendX, y: contentTop - legendHeight, width: legendTotalWidth, height: legendHeight)
 
         // Now place the legend's contents, top down.
         var cursor = contentTop
         var titleRect = CGRect.zero
         var ruleY: CGFloat?
-        if titleHeight > 0 {
-            titleRect = CGRect(x: legendX, y: cursor - titleHeight, width: legendWidth, height: titleHeight)
-            cursor -= titleHeight
+        if titleHeightAcrossLegend > 0 {
+            // The title and its rule span every column, not just the first.
+            titleRect = CGRect(x: legendX, y: cursor - titleHeightAcrossLegend, width: legendTotalWidth, height: titleHeightAcrossLegend)
+            cursor -= titleHeightAcrossLegend
             ruleY = cursor - titleGap / 2
             cursor -= titleGap
         }
 
+        let entriesTop = cursor
         var entries: [Entry] = []
-        for (index, entry) in entriesText.enumerated() {
-            let height = entryHeights[index]
-            let rowTop = cursor
-            entries.append(Entry(
-                number: entry.number,
-                badgeCentre: CGPoint(
-                    x: legendX + badgeDiameter / 2,
-                    // Centred on the first line rather than the whole row, so a
-                    // three-line entry doesn't leave its number stranded in the
-                    // middle of the paragraph.
-                    y: rowTop - entryFontSize * 0.5 - 4
-                ),
-                textRect: CGRect(
-                    x: legendX + badgeDiameter + badgeTextGap,
-                    y: rowTop - height,
-                    width: textWidth,
-                    height: height
-                ),
-                text: displayText(entry.text)
-            ))
-            cursor -= height
-            if index < entriesText.count - 1 { cursor -= entrySpacing }
+        for (columnIndex, column) in columns.enumerated() {
+            let columnX = legendX + CGFloat(columnIndex) * (legendWidth + columnGap)
+            var columnCursor = entriesTop
+
+            for (positionInColumn, index) in column.enumerated() {
+                let height = entryHeights[index]
+                let rowTop = columnCursor
+                entries.append(Entry(
+                    number: entriesText[index].number,
+                    badgeCentre: CGPoint(
+                        x: columnX + badgeDiameter / 2,
+                        // Centred on the first line rather than the whole row, so
+                        // a three-line entry doesn't leave its number stranded in
+                        // the middle of the paragraph.
+                        y: rowTop - entryFontSize * 0.5 - 4
+                    ),
+                    textRect: CGRect(
+                        x: columnX + badgeDiameter + badgeTextGap,
+                        y: rowTop - height,
+                        width: textWidth,
+                        height: height
+                    ),
+                    text: displayText(entriesText[index].text)
+                ))
+                columnCursor -= height
+                if positionInColumn < column.count - 1 { columnCursor -= entrySpacing }
+            }
         }
+        cursor = entriesTop - tallestColumn
 
         var redactionKeyRect: CGRect?
         if hasRedactionKey {
@@ -164,6 +181,60 @@ nonisolated struct CompositionLayout: Sendable {
             ruleY: ruleY,
             redactionKeyRect: redactionKeyRect
         )
+    }
+
+    /// The tallest a single legend column should get before a second one is
+    /// started. Keeps a short capture from forcing one entry per column.
+    static let minimumColumnHeight: CGFloat = 420
+
+    /// The most columns worth flowing into. Past this the legend is so long that
+    /// the picture has stopped being the point, and a taller image is the lesser
+    /// evil against columns too narrow to read.
+    static let maximumLegendColumns = 3
+
+    /// Distributes entries into columns, each filled to roughly `target` before
+    /// the next is started.
+    ///
+    /// Returns indices rather than entries so the caller keeps its own ordering
+    /// and measurements. Reading order is down each column then across, which is
+    /// how a numbered list is read on paper.
+    private static func entryColumns(
+        heights: [CGFloat],
+        includingRedactionKey: Bool,
+        target: CGFloat
+    ) -> [[Int]] {
+        guard !heights.isEmpty else { return [[]] }
+
+        let spacing = entrySpacing
+        var total = heights.reduce(0, +) + CGFloat(heights.count - 1) * spacing
+        if includingRedactionKey { total += spacing + badgeDiameter }
+
+        let wanted = min(maximumLegendColumns, max(1, Int((total / target).rounded(.up))))
+        guard wanted > 1 else { return [Array(heights.indices)] }
+
+        // Aim each column at an equal share, so the columns end up level rather
+        // than the last one holding a stub.
+        let share = total / CGFloat(wanted)
+        var columns: [[Int]] = []
+        var current: [Int] = []
+        var currentHeight: CGFloat = 0
+
+        for index in heights.indices {
+            let height = heights[index]
+            let projected = currentHeight + (current.isEmpty ? 0 : spacing) + height
+            // Never leave a column empty, and never start a new one once the
+            // last is open — the remainder has to go somewhere.
+            if !current.isEmpty, projected > share, columns.count < wanted - 1 {
+                columns.append(current)
+                current = [index]
+                currentHeight = height
+            } else {
+                current.append(index)
+                currentHeight = projected
+            }
+        }
+        columns.append(current)
+        return columns
     }
 
     /// How far past each edge of the capture the marks reach, in points.
