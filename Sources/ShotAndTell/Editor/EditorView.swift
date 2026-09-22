@@ -42,6 +42,11 @@ struct EditorView: View {
                 markerMenu
                 backgroundMenu
             }
+            // Glass takes its tint and its text colour from the colour scheme,
+            // and left alone that's the *system's* — so a dark Mac put white
+            // text on glass over a pale composition, and it was unreadable. These
+            // sit on the composition, so they follow the canvas instead.
+            .environment(\.colorScheme, palette.canvasIsDark ? .dark : .light)
             .padding(16)
         }
         .inspector(isPresented: .constant(true)) {

@@ -20,6 +20,13 @@ nonisolated struct Palette: Sendable {
 
     var canvasIsGradient: Bool { canvasTop != canvasBottom }
 
+    /// Whether controls laid over the canvas need to be light-on-dark. Worked
+    /// out from the colour rather than the appearance, because the two
+    /// disagree: the Ink tone is near-black in a *light* composition.
+    var canvasIsDark: Bool {
+        MarkerColour.relativeLuminance(canvasBottom) < 0.18
+    }
+
     static func resolve(
         background: BackgroundStyle,
         appearance: Composition.Appearance,
@@ -31,7 +38,7 @@ nonisolated struct Palette: Sendable {
         // colour reads as deliberate annotation; a palette of them reads as clip
         // art, and makes "the red one" an ambiguous thing to say. Which colour
         // it is, though, is the user's — see MarkerColour.
-        let marker = markerColour.resolved(for: appearance)
+        let marker = markerColour.resolved
         let ink = dark ? rgb(0xF2F2F5) : rgb(0x1C1C1E)
         let inkSecondary = dark ? rgb(0x9A9AA2) : rgb(0x6C6C72)
         let rule = dark ? rgb(0xFFFFFF, alpha: 0.12) : rgb(0x000000, alpha: 0.10)
@@ -61,7 +68,7 @@ nonisolated struct Palette: Sendable {
             inkSecondary: inkSecondary,
             rule: rule,
             marker: marker,
-            markerInk: markerColour.ink(for: appearance),
+            markerInk: markerColour.ink,
             // Redaction is deliberately flat and opaque rather than blurred:
             // a blur is a picture of the thing you're hiding, and at these sizes
             // it's often reversible enough to matter.

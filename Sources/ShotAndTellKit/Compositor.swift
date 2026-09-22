@@ -201,45 +201,85 @@ nonisolated enum Compositor {
         context.clip()
         for redaction in composition.redactions {
             guard case let .redaction(normalised) = redaction.kind else { continue }
-            let rect = denormalise(normalised, in: capture)
-            context.setFillColor(palette.redaction)
-            // Square corners, and half a point of overdraw. A rounded corner
-            // leaves a few of the original pixels showing in the notch, and the
-            // antialiased boundary row blends with what's underneath — a small
-            // nibble, but the entire point of an opaque fill is that nothing
-            // under it survives. Cosmetics lose this argument.
-            context.fill(rect.insetBy(dx: -0.5, dy: -0.5))
+            drawRedaction(denormalise(normalised, in: capture), palette: palette, in: context)
         }
         context.restoreGState()
 
         // Marks are deliberately *not* clipped to the capture: the layout grew
         // the canvas to make room for anything hanging over the edge.
-        for (number, annotation) in composition.numbered {
-            switch annotation.kind {
-            case let .pin(point):
-                drawMarker(number: number, centre: denormalise(point, in: capture), palette: palette, in: context)
-
-            case let .arrow(from, to):
-                drawArrow(
-                    from: denormalise(from, in: capture),
-                    to: denormalise(to, in: capture),
-                    palette: palette,
-                    in: context
-                )
-                drawMarker(number: number, centre: denormalise(from, in: capture), palette: palette, in: context)
-
-            case let .box(normalised):
-                let rect = denormalise(normalised, in: capture)
-                context.setStrokeColor(palette.marker)
-                context.setLineWidth(2.5)
-                context.addPath(CGPath(roundedRect: rect.insetBy(dx: 1.25, dy: 1.25), cornerWidth: 4, cornerHeight: 4, transform: nil))
-                context.strokePath()
-                drawMarker(number: number, centre: CGPoint(x: rect.minX, y: rect.maxY), palette: palette, in: context)
-
-            case .redaction:
-                break
+        withMarkShadow(in: context) {
+            for (number, annotation) in composition.numbered {
+                drawMark(annotation.kind, number: number, capture: capture, palette: palette, in: context)
             }
         }
+    }
+
+    /// One numbered mark, in layout coordinates. Also how the editor draws the
+    /// mark you're in the middle of dragging out, so the preview is the real
+    /// thing — colour, weight, badge and number — rather than an outline that
+    /// changes into something else when you let go.
+    static func drawMark(_ kind: Annotation.Kind, number: Int, capture: CGRect, palette: Palette, in context: CGContext) {
+        switch kind {
+        case let .pin(point):
+            drawMarker(number: number, centre: denormalise(point, in: capture), palette: palette, in: context)
+
+        case let .arrow(from, to):
+            drawArrow(
+                from: denormalise(from, in: capture),
+                to: denormalise(to, in: capture),
+                palette: palette,
+                in: context
+            )
+            drawMarker(number: number, centre: denormalise(from, in: capture), palette: palette, in: context)
+
+        case let .box(normalised):
+            let rect = denormalise(normalised, in: capture)
+            context.setStrokeColor(palette.marker)
+            context.setLineWidth(2.5)
+            context.addPath(CGPath(roundedRect: rect.insetBy(dx: 1.25, dy: 1.25), cornerWidth: 4, cornerHeight: 4, transform: nil))
+            context.strokePath()
+            drawMarker(number: number, centre: CGPoint(x: rect.minX, y: rect.maxY), palette: palette, in: context)
+
+        case let .redaction(normalised):
+            drawRedaction(denormalise(normalised, in: capture), palette: palette, in: context)
+        }
+    }
+
+    static func drawRedaction(_ rect: CGRect, palette: Palette, in context: CGContext) {
+        context.setFillColor(palette.redaction)
+        // Square corners, and half a point of overdraw. A rounded corner
+        // leaves a few of the original pixels showing in the notch, and the
+        // antialiased boundary row blends with what's underneath — a small
+        // nibble, but the entire point of an opaque fill is that nothing
+        // under it survives. Cosmetics lose this argument.
+        context.fill(rect.insetBy(dx: -0.5, dy: -0.5))
+    }
+
+    /// A soft shadow under the marks, so they sit visibly *on* the screenshot
+    /// rather than looking printed into it — a thin arrow over a busy UI
+    /// otherwise reads as part of the UI.
+    ///
+    /// Everything is drawn into one transparency layer and the layer casts the
+    /// shadow, rather than each stroke and badge casting its own: an arrow's
+    /// shaft, head and badge overlap, and separate shadows darken where they
+    /// stack.
+    ///
+    /// Shadow offset and blur are specified in device space, not user space —
+    /// Core Graphics doesn't apply the transform to them — so they're scaled by
+    /// hand. Without that, a 2x export gets a shadow half the size of the one on
+    /// screen.
+    static func withMarkShadow(in context: CGContext, _ draw: () -> Void) {
+        let scale = abs(context.ctm.a)
+        context.saveGState()
+        context.setShadow(
+            offset: CGSize(width: 0, height: -1 * scale),
+            blur: 3 * scale,
+            color: CGColor(srgbRed: 0, green: 0, blue: 0, alpha: 0.4)
+        )
+        context.beginTransparencyLayer(auxiliaryInfo: nil)
+        draw()
+        context.endTransparencyLayer()
+        context.restoreGState()
     }
 
     /// Markers are clipped to the capture's rounded rectangle so one dropped
@@ -258,9 +298,12 @@ nonisolated enum Compositor {
         let diameter = CompositionLayout.markerDiameter
         let rect = CGRect(x: centre.x - diameter / 2, y: centre.y - diameter / 2, width: diameter, height: diameter)
 
-        // A white ring, so the marker stays legible on a screenshot that happens
-        // to be the same colour as the marker.
-        context.setFillColor(CGColor(srgbRed: 1, green: 1, blue: 1, alpha: 0.95))
+        // A ring, so the marker stays legible on a screenshot that happens to be
+        // the same colour as the marker. The same colour as the numeral: white
+        // around a white number, and dark around the dark number a pale marker
+        // gets. A white ring around a black number reads as two different
+        // badges stacked.
+        context.setFillColor(palette.markerInk.copy(alpha: 0.95) ?? palette.markerInk)
         context.fillEllipse(in: rect.insetBy(dx: -2, dy: -2))
 
         context.setFillColor(palette.marker)

@@ -190,24 +190,47 @@ final class CompositionCanvasView: NSView {
         }
     }
 
+    /// The mark being dragged out, drawn by the compositor itself in the
+    /// composition's marker colour, with the number it's about to get. It used
+    /// to be a thin outline in the system accent colour, which meant a red box
+    /// was drawn in blue until you let go of it.
+    ///
+    /// The endpoints go through the same margin clamping as `mouseUp`, so what
+    /// you see while dragging is what lands.
     private func drawDragPreview(in context: CGContext) {
-        guard let document, let start = dragStart, let current = dragCurrent, document.tool.isDragged else { return }
+        guard let document, let start = dragStart, let current = dragCurrent, document.tool.isDragged,
+              let layout = cachedLayout, let palette = cachedPalette
+        else { return }
 
-        context.setStrokeColor(NSColor.controlAccentColor.cgColor)
-        context.setLineWidth(1.5)
+        let from = normalisedAllowingMargin(start, layout: layout)
+        let to = normalisedAllowingMargin(current, layout: layout)
+        let rect = CGRect(x: min(from.x, to.x), y: min(from.y, to.y),
+                          width: abs(to.x - from.x), height: abs(to.y - from.y))
+        let number = document.composition.numbered.count + 1
+
+        context.saveGState()
+        defer { context.restoreGState() }
+        // Into layout space, the same mapping the cached image is drawn with.
+        context.translateBy(x: fitRect.minX, y: fitRect.minY)
+        context.scaleBy(x: fitScale, y: fitScale)
 
         switch document.tool {
         case .arrow:
-            context.move(to: start)
-            context.addLine(to: current)
-            context.strokePath()
-        case .box, .redact:
-            context.stroke(CGRect(
-                x: min(start.x, current.x),
-                y: min(start.y, current.y),
-                width: abs(current.x - start.x),
-                height: abs(current.y - start.y)
-            ))
+            Compositor.withMarkShadow(in: context) {
+                Compositor.drawMark(.arrow(from: from, to: to), number: number,
+                                    capture: layout.captureRect, palette: palette, in: context)
+            }
+        case .box:
+            Compositor.withMarkShadow(in: context) {
+                Compositor.drawMark(.box(rect), number: number,
+                                    capture: layout.captureRect, palette: palette, in: context)
+            }
+        case .redact:
+            // Clipped to the capture, as the export is: a redaction only ever
+            // covers the screenshot.
+            context.clip(to: layout.captureRect)
+            Compositor.drawMark(.redaction(rect), number: 0,
+                                capture: layout.captureRect, palette: palette, in: context)
         default:
             break
         }

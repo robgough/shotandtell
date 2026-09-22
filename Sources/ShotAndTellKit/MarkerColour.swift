@@ -29,19 +29,26 @@ nonisolated enum MarkerColour: Equatable, Hashable, Codable, Sendable {
             }
         }
 
-        /// Two values each: the darker one reads on a light background, the
-        /// lighter one on a dark background. A single value that worked on both
-        /// would be a compromise on each.
-        fileprivate var hexes: (light: UInt32, dark: UInt32) {
+        /// One value each, whatever the appearance.
+        ///
+        /// There used to be a paler variant for dark compositions, on the
+        /// reasoning that a dark canvas wants lighter marks. But the marks sit on
+        /// the *screenshot*, which is as light or as dark as it was when it was
+        /// taken, regardless of the canvas around it. The pale variants came out
+        /// washed-out pink and lilac on exactly the screenshots they were meant to
+        /// stand out on, and were pale enough that white numerals failed on them,
+        /// so dark compositions got black numbers in a white ring. The ring and
+        /// the drop shadow are what keep a mark visible on the canvas margin.
+        fileprivate var hex: UInt32 {
             switch self {
-            case .red: (0xE5484D, 0xFF6B70)
-            case .orange: (0xE0651E, 0xFF8A3D)
-            case .amber: (0xC98A00, 0xF5C542)
-            case .green: (0x2E9B57, 0x46C97B)
-            case .teal: (0x1C8C8C, 0x3CC0C0)
-            case .blue: (0x2668E0, 0x5B95FF)
-            case .purple: (0x7B44C9, 0xA87BF0)
-            case .pink: (0xD63384, 0xFF6FB1)
+            case .red: 0xE5484D
+            case .orange: 0xE0651E
+            case .amber: 0xC98A00
+            case .green: 0x2E9B57
+            case .teal: 0x1C8C8C
+            case .blue: 0x2668E0
+            case .purple: 0x7B44C9
+            case .pink: 0xD63384
             }
         }
     }
@@ -57,12 +64,11 @@ nonisolated enum MarkerColour: Equatable, Hashable, Codable, Sendable {
         }
     }
 
-    /// The colour to draw with, in the composition's light or dark treatment.
-    func resolved(for appearance: Composition.Appearance) -> CGColor {
+    /// The colour to draw with.
+    var resolved: CGColor {
         switch self {
         case let .preset(preset):
-            let hex = appearance == .dark ? preset.hexes.dark : preset.hexes.light
-            return Self.colour(hex)
+            return Self.colour(preset.hex)
         case let .custom(red, green, blue):
             // A chosen colour is used exactly as chosen. Nudging it towards the
             // appearance would mean the swatch in the picker and the mark on the
@@ -84,9 +90,9 @@ nonisolated enum MarkerColour: Equatable, Hashable, Codable, Sendable {
     /// 3:1 — WCAG's large-text floor, which is where legibility genuinely starts
     /// to go. That catches the amber and the bright custom colours, which are
     /// the cases that actually fail, and leaves the rest alone.
-    func ink(for appearance: Composition.Appearance) -> CGColor {
+    var ink: CGColor {
         let white = Self.colour(0xFFFFFF)
-        let marker = Self.relativeLuminance(resolved(for: appearance))
+        let marker = Self.relativeLuminance(resolved)
         let againstWhite = Self.contrastRatio(marker, Self.relativeLuminance(white))
 
         return againstWhite >= 3 ? white : Self.colour(0x1C1C1E)
@@ -95,7 +101,7 @@ nonisolated enum MarkerColour: Equatable, Hashable, Codable, Sendable {
     /// WCAG relative luminance: sRGB components linearised first, then weighted
     /// for the eye's sensitivity. The linearisation is the part a naive
     /// weighted average leaves out, and it's most of the error.
-    private static func relativeLuminance(_ colour: CGColor) -> Double {
+    static func relativeLuminance(_ colour: CGColor) -> Double {
         let components = colour.components ?? [0, 0, 0, 1]
         guard components.count >= 3 else { return 0 }
 

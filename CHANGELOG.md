@@ -10,6 +10,13 @@ don't.
 
 ## Unreleased
 
+- A box, arrow or redaction is drawn in its real colour and weight while you
+  drag it out, with the number it's about to get, instead of a thin blue outline.
+- Marks carry a soft shadow, so they sit visibly on top of busy screenshots.
+- Dark compositions use the same vivid marker colours as light ones, rather than
+  washed-out pastels, and a badge's ring always matches its number.
+- The marker colour and Background buttons stay readable whatever the canvas
+  colour, instead of following the system's light or dark mode.
 - Take a screenshot by dragging out a region, clicking a window, or picking a
   whole screen, with an optional 3, 5 or 10 second timer. Picking a whole screen
   now says what to click, and the click works.
