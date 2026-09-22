@@ -45,7 +45,7 @@ struct AboutView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text("Shot and Tell")
                     .font(.system(size: 22, weight: .semibold, design: .rounded))
-                Text("Screenshots you can point at. Mark things up with numbers, describe them, and hand the picture and the words over together.")
+                Text("Screenshots you can point at.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -63,9 +63,8 @@ struct AboutView: View {
 
     private var author: some View {
         section("Author") {
-            Text("I'm **Rob Gough** — a tech advisor and fractional CTO offering a senior pair of eyes on tech strategy and what to build next, drawing on a long career in engineering and tech leadership. I'm also building **Stay Upfront**, a unified support and incident management tool for B2B SaaS companies.")
-            Text("Shot and Tell came out of a small, daily annoyance. I'd paste a screenshot to an AI and then write a paragraph trying to describe *where* on it I meant — \"the heading, no, the one above that, on the left\" — and half the time it answered about the wrong thing. Numbering what I wanted to talk about turned out to be the whole fix. Once the numbers are on the picture, the same numbers can carry the words, so the model gets the pixels and the sentences at once and there's nothing left to be vague about.")
-            Text("I use it most days for exactly that. I hope you find it useful — and thank you for giving it a try.")
+            Text("I'm **Rob Gough** — a tech advisor and fractional CTO. I'm also building **Stay Upfront**, support and incident management for B2B SaaS companies.")
+            Text("I made this because describing *where* on a screenshot I meant was taking longer than the screenshot saved.")
             HStack(spacing: 14) {
                 Link(destination: URL(string: "https://stayupfront.com")!) {
                     Label("stayupfront.com", systemImage: "bolt.horizontal")
@@ -80,11 +79,8 @@ struct AboutView: View {
 
     private var privacy: some View {
         section("Privacy") {
-            Text("Nothing leaves your Mac, and that isn't a promise — it's a build setting. Shot and Tell ships without the network entitlement, so it has no way to reach the internet even if it wanted to.")
-            Text("Screenshots are held in memory while you mark them up. The only thing ever written to disk is the finished image, in the folder you choose. Redactions are composited into that image rather than drawn over it, so the pixels underneath never reach the clipboard or the file.")
-            Text("If Apple Intelligence is available, the title is suggested by Apple's on-device model. That runs locally too. There is no telemetry, no analytics and no account.")
-            Text("Shot and Tell is provided as-is. Please use it for what it's good at, and let me know when it isn't.")
-                .foregroundStyle(.secondary)
+            Text("Shot and Tell ships without the network entitlement, so it can't reach the internet at all. No telemetry, no analytics, no account.")
+            Text("Redactions are composited into the exported image, so whatever was underneath never reaches the clipboard or the file. Titles are suggested by Apple's on-device model, if you have one.")
         }
     }
 
