@@ -182,3 +182,15 @@ final class EditorWindowController: NSWindowController, NSWindowDelegate {
         onClose(self)
     }
 }
+
+// MARK: - Zoom
+
+/// The View menu's zoom commands. Here rather than on the canvas so they reach
+/// the editor through the responder chain even while a legend field has focus
+/// — the canvas isn't in the chain then, the window controller always is.
+extension EditorWindowController {
+    @objc func zoomCanvasIn(_ sender: Any?) { editorDocument.zoomIn() }
+    @objc func zoomCanvasOut(_ sender: Any?) { editorDocument.zoomOut() }
+    @objc func zoomCanvasToActualSize(_ sender: Any?) { editorDocument.zoomToActualSize() }
+    @objc func zoomCanvasToFit(_ sender: Any?) { editorDocument.zoomToFit() }
+}

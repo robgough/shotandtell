@@ -20,8 +20,25 @@ final class CompositionCanvasView: NSView {
 
     /// Where the composition is drawn inside the view, and how much it was
     /// scaled to get there. Everything about hit testing follows from these.
+    ///
+    /// Zoomed in, `fitRect` is bigger than the view and `fitScale` is the zoom;
+    /// everything that converts between view and canvas goes through these two,
+    /// so hit testing, handles and drawing all follow the zoom without knowing
+    /// about it.
     private var fitRect: CGRect = .zero
     private var fitScale: CGFloat = 1
+
+    /// Pixels per canvas point the cached image was rendered at.
+    private var cachedRenderScale: CGFloat = 0
+    /// While zoomed in, the canvas point at the middle of the visible area.
+    /// Stored in canvas space so zooming by the menu or the button keeps the
+    /// same thing in the middle without anything else to do.
+    private var panCentre: CGPoint?
+    /// True mid-gesture. The cache isn't re-rendered while a pinch or ⌘-scroll
+    /// is changing the scale every frame — on a big capture that's tens of
+    /// milliseconds a time — so the last one is stretched until it settles.
+    private var isZooming = false
+    private var zoomSettle: DispatchWorkItem?
 
     private var dragStart: CGPoint?
     private var dragCurrent: CGPoint?
@@ -75,32 +92,63 @@ final class CompositionCanvasView: NSView {
         // No legend on the canvas: the panel to the right is the legend, and
         // showing it twice just makes the screenshot smaller.
         let layout = CompositionLayout.solve(composition, palette: palette, includeLegend: false)
+        cachedLayout = layout
+
         // safeAreaRect, not bounds: the canvas runs underneath the window's
         // toolbar, and the composition shouldn't be fitted into the part of
         // itself that's covered by it.
-        let fit = Self.fit(layout.canvasSize, in: safeAreaRect)
-        let scaleChanged = abs(fit.width - fitRect.width) > 0.5
+        let area = safeAreaRect
+        let fitted = Self.fit(layout.canvasSize, in: area)
+        let fitsAt = layout.canvasSize.width > 0 ? fitted.width / layout.canvasSize.width : 1
+        if abs(document.fitScale - fitsAt) > 0.0005 {
+            // Next cycle: this runs inside draw(_:), and changing observed state
+            // here would have SwiftUI updating while AppKit is mid-draw.
+            DispatchQueue.main.async { [weak document] in document?.fitScale = fitsAt }
+        }
 
-        fitRect = fit
-        fitScale = layout.canvasSize.width > 0 ? fit.width / layout.canvasSize.width : 1
-        cachedLayout = layout
+        let scale = document.magnification.map { min(max($0, fitsAt), EditorDocument.maximumMagnification) } ?? fitsAt
+        if scale <= fitsAt * 1.001 {
+            fitRect = fitted
+            panCentre = nil
+        } else {
+            let size = CGSize(width: layout.canvasSize.width * scale, height: layout.canvasSize.height * scale)
+            let centre = panCentre ?? CGPoint(x: layout.canvasSize.width / 2, y: layout.canvasSize.height / 2)
+            // Centred on an axis where it still fits; otherwise positioned by
+            // the pan and kept from sliding off so far it leaves a gap.
+            func origin(_ length: CGFloat, _ lower: CGFloat, _ upper: CGFloat, _ middle: CGFloat) -> CGFloat {
+                let span = upper - lower
+                if length <= span { return lower + (span - length) / 2 }
+                return min(max((lower + upper) / 2 - middle * scale, upper - length), lower)
+            }
+            let x = origin(size.width, area.minX, area.maxX, centre.x)
+            let y = origin(size.height, area.minY, area.maxY, centre.y)
+            fitRect = CGRect(x: x, y: y, width: size.width, height: size.height)
+            panCentre = CGPoint(x: (area.midX - x) / scale, y: (area.midY - y) / scale)
+        }
+        fitScale = scale
 
-        guard cacheIsStale || scaleChanged || cachedImage == nil else { return }
-
-        // Render only as many pixels as are actually shown. At export time this
-        // is done again at 2x; here, matching the screen keeps a drag smooth on
-        // a large capture.
+        // As many pixels as are shown, but never more than the screenshot has:
+        // past its own resolution, extra pixels would only be interpolated.
+        // Zooming in beyond that shows the screenshot's pixels as pixels
+        // instead — see draw(_:).
         let backing = window?.backingScaleFactor ?? 2
-        let renderScale = max(0.5, min(backing, fitScale * backing))
+        let native = max(composition.capture.scale, backing)
+        let wanted = max(0.5, min(scale * backing, native))
+        let scaleIsOff = cachedRenderScale == 0 || abs(wanted - cachedRenderScale) / cachedRenderScale > 0.05
 
-        // Rendered without its background, because the view paints that across
-        // its whole area — see draw(_:).
+        guard cacheIsStale || cachedImage == nil || (scaleIsOff && !isZooming) else { return }
+
+        // Without its background, because the view paints that across its
+        // whole area, and without its marks, because draw(_:) draws those live
+        // on top — sharp at any zoom, where these pixels won't be.
         cachedImage = try? Compositor.render(
             composition,
-            scale: renderScale,
+            scale: wanted,
             includeLegend: false,
-            drawsBackground: false
+            drawsBackground: false,
+            drawsAnnotations: false
         ).image
+        cachedRenderScale = wanted
         cacheIsStale = false
     }
 
@@ -128,13 +176,38 @@ final class CompositionCanvasView: NSView {
             Compositor.drawBackground(palette: cachedPalette, in: bounds, context: context)
         }
 
+        // Zoomed in, the composition is bigger than the view and would carry on
+        // under the legend panel, smeared through its glass. Stopped at the
+        // panel's edge. Up under the toolbar is left alone — that's the
+        // standard look for content scrolled beneath one.
+        let area = safeAreaRect
+        context.saveGState()
+        context.clip(to: CGRect(x: area.minX, y: bounds.minY, width: area.width, height: bounds.height))
+        defer { context.restoreGState() }
+
         if let cachedImage {
-            context.interpolationQuality = .high
+            // Magnified to twice the rendered resolution or more, show the
+            // screenshot's pixels as crisp squares rather than smearing them:
+            // that far in, the point is to see exactly where an edge is.
+            let shown = fitScale * (window?.backingScaleFactor ?? 2)
+            context.interpolationQuality = shown >= cachedRenderScale * 1.99 ? .none : .high
             context.draw(cachedImage, in: fitRect)
         }
 
+        drawMarks(in: context)
         drawSelection(in: context)
         drawDragPreview(in: context)
+    }
+
+    /// The marks, drawn by the compositor in view space every time, so they're
+    /// as sharp at 400% as at fit.
+    private func drawMarks(in context: CGContext) {
+        guard let document, let layout = cachedLayout, let palette = cachedPalette else { return }
+        context.saveGState()
+        context.translateBy(x: fitRect.minX, y: fitRect.minY)
+        context.scaleBy(x: fitScale, y: fitScale)
+        Compositor.drawAnnotations(document.composition, layout: layout, palette: palette, in: context)
+        context.restoreGState()
     }
 
     private func drawSelection(in context: CGContext) {
@@ -326,6 +399,76 @@ final class CompositionCanvasView: NSView {
         case let .box(rect), let .redaction(rect):
             return Compositor.denormalise(rect, in: layout.captureRect)
         }
+    }
+
+    // MARK: - Zoom
+
+    /// Pinch to zoom, around the pointer.
+    override func magnify(with event: NSEvent) {
+        guard let document else { return }
+        zoom(to: document.effectiveScale * (1 + event.magnification), keeping: convert(event.locationInWindow, from: nil))
+    }
+
+    /// Two-finger double tap: Fit to actual size (or twice fit, if the capture
+    /// is small enough that fit already is actual size), and back.
+    override func smartMagnify(with event: NSEvent) {
+        guard let document else { return }
+        if document.magnification == nil {
+            let target: CGFloat = document.fitScale < 0.99 ? 1 : document.fitScale * 2
+            zoom(to: target, keeping: convert(event.locationInWindow, from: nil))
+        } else {
+            document.zoomToFit()
+            needsDisplay = true
+        }
+    }
+
+    /// Scrolling pans while zoomed in. With ⌘ held it zooms instead, for a
+    /// mouse, which can't pinch.
+    override func scrollWheel(with event: NSEvent) {
+        guard let document else { return super.scrollWheel(with: event) }
+
+        if event.modifierFlags.contains(.command) {
+            let step = event.hasPreciseScrollingDeltas ? event.scrollingDeltaY / 300 : event.scrollingDeltaY / 30
+            zoom(to: document.effectiveScale * (1 + step), keeping: convert(event.locationInWindow, from: nil))
+            return
+        }
+
+        guard document.magnification != nil, let centre = panCentre else { return super.scrollWheel(with: event) }
+        let lines: CGFloat = event.hasPreciseScrollingDeltas ? 1 : 12
+        panCentre = CGPoint(
+            x: centre.x - event.scrollingDeltaX * lines / fitScale,
+            y: centre.y + event.scrollingDeltaY * lines / fitScale
+        )
+        needsDisplay = true
+        window?.invalidateCursorRects(for: self)
+    }
+
+    /// Changes the zoom while keeping the canvas point under `viewPoint` where
+    /// it is, which is what makes a pinch feel anchored to the fingers.
+    private func zoom(to scale: CGFloat, keeping viewPoint: CGPoint) {
+        guard let document else { return }
+        let anchor = canvasPoint(viewPoint)
+        document.setMagnification(scale)
+
+        let newScale = min(max(document.magnification ?? document.fitScale, document.fitScale), EditorDocument.maximumMagnification)
+        let area = safeAreaRect
+        panCentre = document.magnification == nil ? nil : CGPoint(
+            x: anchor.x + (area.midX - viewPoint.x) / newScale,
+            y: anchor.y + (area.midY - viewPoint.y) / newScale
+        )
+
+        isZooming = true
+        zoomSettle?.cancel()
+        let settle = DispatchWorkItem { [weak self] in
+            guard let self else { return }
+            isZooming = false
+            needsDisplay = true
+        }
+        zoomSettle = settle
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: settle)
+
+        needsDisplay = true
+        window?.invalidateCursorRects(for: self)
     }
 
     // MARK: - Mouse
@@ -575,6 +718,9 @@ struct CompositionCanvas: NSViewRepresentable {
     let revision: Int
     /// Bumped when the canvas should take keyboard focus back from the legend.
     let focusRequests: Int
+    /// Passed in so a change from the menu or the zoom button is guaranteed to
+    /// reach the canvas, the same way `revision` is.
+    let magnification: CGFloat?
 
     func makeNSView(context: Context) -> CompositionCanvasView {
         let view = CompositionCanvasView()
@@ -595,12 +741,21 @@ struct CompositionCanvas: NSViewRepresentable {
                 view.window?.makeFirstResponder(view)
             }
         }
-        view.invalidate()
+        // Re-render only when the composition changed. SwiftUI calls this for
+        // anything the editor observes — the zoom, the selection — and
+        // re-rendering a large capture for each of those made a pinch stutter.
+        if revision != context.coordinator.lastRevision {
+            context.coordinator.lastRevision = revision
+            view.invalidate()
+        } else {
+            view.needsDisplay = true
+        }
     }
 
     func makeCoordinator() -> Coordinator { Coordinator() }
 
     final class Coordinator {
         var lastFocusRequest = 0
+        var lastRevision = -1
     }
 }

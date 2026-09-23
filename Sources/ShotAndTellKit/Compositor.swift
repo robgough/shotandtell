@@ -27,11 +27,17 @@ nonisolated enum Compositor {
     /// paint the background themselves across a larger area — the editor does
     /// this so the composition's colour runs to the edges of the window instead
     /// of stopping at a rectangle floating in the middle of it.
+    ///
+    /// `drawsAnnotations: false` leaves the marks off but lays everything out
+    /// as if they were there, margins included. The editor draws the marks
+    /// itself, live, so they stay sharp when it's zoomed in past the
+    /// resolution this image was rendered at.
     static func render(
         _ composition: Composition,
         scale: CGFloat,
         includeLegend: Bool = true,
-        drawsBackground: Bool = true
+        drawsBackground: Bool = true,
+        drawsAnnotations: Bool = true
     ) throws -> Output {
         let palette = Palette.resolve(
             background: composition.background,
@@ -71,7 +77,9 @@ nonisolated enum Compositor {
             drawBackground(palette: palette, in: CGRect(origin: .zero, size: drawnSize), context: context)
         }
         drawCapture(composition, layout: layout, palette: palette, in: context)
-        drawAnnotations(composition, layout: layout, palette: palette, in: context)
+        if drawsAnnotations {
+            drawAnnotations(composition, layout: layout, palette: palette, in: context)
+        }
         drawLegend(composition, layout: layout, palette: palette, in: context)
 
         guard let image = context.makeImage() else { throw Failure.couldNotRender }
@@ -189,7 +197,7 @@ nonisolated enum Compositor {
 
     // MARK: - Annotations
 
-    private static func drawAnnotations(_ composition: Composition, layout: CompositionLayout, palette: Palette, in context: CGContext) {
+    static func drawAnnotations(_ composition: Composition, layout: CompositionLayout, palette: Palette, in context: CGContext) {
         let capture = layout.captureRect
 
         // Redactions first and separately: they must cover the capture, and they

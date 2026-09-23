@@ -30,6 +30,54 @@ final class EditorDocument {
         canvasFocusRequests &+= 1
     }
 
+    // MARK: - Zoom
+
+    /// How big the composition is drawn, in view points per canvas point — 1 is
+    /// actual size. nil means "fit the window", which is where every capture
+    /// starts, and which follows the window as it's resized.
+    ///
+    /// Lives here rather than in the canvas so the zoom button, the View menu
+    /// and the canvas's own gestures all change the same thing.
+    var magnification: CGFloat?
+
+    /// The scale that fits the composition in the window right now, reported
+    /// back by the canvas. Needed to know what "zoom in" means from Fit, and
+    /// to show a percentage for it.
+    var fitScale: CGFloat = 1
+
+    /// The scale actually in use.
+    var effectiveScale: CGFloat { max(magnification ?? fitScale, fitScale) }
+
+    static let maximumMagnification: CGFloat = 4
+    private static let zoomSteps: [CGFloat] = [0.25, 1.0 / 3, 0.5, 2.0 / 3, 0.75, 1, 1.5, 2, 3, 4]
+
+    func zoomIn() {
+        let current = effectiveScale
+        let next = Self.zoomSteps.first { $0 > current * 1.01 } ?? Self.maximumMagnification
+        setMagnification(next)
+    }
+
+    func zoomOut() {
+        let current = effectiveScale
+        let previous = Self.zoomSteps.last { $0 < current * 0.99 } ?? fitScale
+        setMagnification(previous)
+    }
+
+    func zoomToFit() {
+        magnification = nil
+    }
+
+    func zoomToActualSize() {
+        setMagnification(1)
+    }
+
+    /// Anything at or below the fit scale is Fit — zooming out past the point
+    /// where the whole thing is visible only makes it smaller.
+    func setMagnification(_ scale: CGFloat) {
+        let clamped = min(scale, Self.maximumMagnification)
+        magnification = clamped <= fitScale * 1.001 ? nil : clamped
+    }
+
     /// True while the on-device model is looking at the capture. Shown in the
     /// legend so an empty title field doesn't just sit there looking broken.
     private(set) var isSuggestingTitle = false

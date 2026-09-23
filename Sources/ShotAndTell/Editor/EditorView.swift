@@ -29,7 +29,8 @@ struct EditorView: View {
         CompositionCanvas(
             document: document,
             revision: document.revision,
-            focusRequests: document.canvasFocusRequests
+            focusRequests: document.canvasFocusRequests,
+            magnification: document.magnification
         )
         // The composition runs under the floating toolbar; the canvas fits
         // itself into the safe area so nothing important hides behind it.
@@ -37,6 +38,11 @@ struct EditorView: View {
         // Over the composition rather than up in the toolbar. It changes how the
         // background looks, it's set rarely, and the header is for the things
         // you reach for every time.
+        .overlay(alignment: .bottomLeading) {
+            zoomMenu
+                .environment(\.colorScheme, palette.canvasIsDark ? .dark : .light)
+                .padding(16)
+        }
         .overlay(alignment: .bottomTrailing) {
             HStack(spacing: 8) {
                 markerMenu
@@ -220,6 +226,34 @@ struct EditorView: View {
                 blue: Double(srgb.blueComponent)
             )
         }
+    }
+
+    /// Opposite corner from the colour and background buttons: those change the
+    /// picture, this only changes how you're looking at it. Shortcuts are in
+    /// the View menu, which is where they're shown.
+    private var zoomMenu: some View {
+        Menu {
+            Button("Zoom In") { document.zoomIn() }
+            Button("Zoom Out") { document.zoomOut() }
+                .disabled(document.magnification == nil)
+            Divider()
+            Button("Actual Size") { document.zoomToActualSize() }
+            Button("Zoom to Fit") { document.zoomToFit() }
+                .disabled(document.magnification == nil)
+        } label: {
+            Label(zoomLabel, systemImage: "plus.magnifyingglass")
+                .monospacedDigit()
+        }
+        .menuStyle(.button)
+        .buttonStyle(.glass)
+        .labelStyle(.titleAndIcon)
+        .fixedSize()
+        .help("Zoom in to place marks precisely. Pinch, or ⌘-scroll with a mouse.")
+    }
+
+    private var zoomLabel: String {
+        guard let magnification = document.magnification else { return "Fit" }
+        return "\(Int((magnification * 100).rounded()))%"
     }
 
     private var backgroundMenu: some View {

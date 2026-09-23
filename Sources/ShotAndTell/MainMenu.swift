@@ -2,10 +2,11 @@ import AppKit
 
 /// The app's main menu bar, built in code.
 ///
-/// Only three menus, and each is here for a reason: the App menu because macOS
+/// Four menus, and each is here for a reason: the App menu because macOS
 /// requires one and it's where Settings and Quit live; Edit because the legend
-/// is full of text fields and ⌘Z / ⌘C / ⌘V have to work in them; Window because
-/// the editor is a real window and people expect to be able to minimise it.
+/// is full of text fields and ⌘Z / ⌘C / ⌘V have to work in them; View for zoom,
+/// whose shortcuts people expect to find there; Window because the editor is a
+/// real window and people expect to be able to minimise it.
 enum MainMenu {
     /// Returns the menu bar and the Window menu within it. The caller hands the
     /// Window menu to `NSApp.windowsMenu` so AppKit can manage the window list
@@ -15,6 +16,7 @@ enum MainMenu {
         let main = NSMenu()
         main.addItem(appMenuItem())
         main.addItem(editMenuItem())
+        main.addItem(viewMenuItem())
 
         let window = windowMenuItem()
         main.addItem(window)
@@ -60,6 +62,30 @@ enum MainMenu {
         menu.addItem(withTitle: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
         menu.addItem(withTitle: "Delete", action: #selector(NSText.delete(_:)), keyEquivalent: "")
         menu.addItem(withTitle: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
+
+        item.submenu = menu
+        return item
+    }
+
+    /// Zoom commands, handled by `EditorWindowController` through the responder
+    /// chain — so they're enabled only while an editor is the key window, and
+    /// work whether the canvas or a legend field has focus.
+    ///
+    /// Shortcuts follow Preview: ⌘0 actual size, ⌘9 fit.
+    private static func viewMenuItem() -> NSMenuItem {
+        let item = NSMenuItem()
+        let menu = NSMenu(title: "View")
+
+        menu.addItem(withTitle: "Zoom In", action: #selector(EditorWindowController.zoomCanvasIn(_:)), keyEquivalent: "+")
+        // ⌘= as well, unshown: on most keyboards + needs Shift, and nobody
+        // presses ⌘⇧= to zoom.
+        let equals = menu.addItem(withTitle: "Zoom In", action: #selector(EditorWindowController.zoomCanvasIn(_:)), keyEquivalent: "=")
+        equals.isHidden = true
+        equals.allowsKeyEquivalentWhenHidden = true
+        menu.addItem(withTitle: "Zoom Out", action: #selector(EditorWindowController.zoomCanvasOut(_:)), keyEquivalent: "-")
+        menu.addItem(.separator())
+        menu.addItem(withTitle: "Actual Size", action: #selector(EditorWindowController.zoomCanvasToActualSize(_:)), keyEquivalent: "0")
+        menu.addItem(withTitle: "Zoom to Fit", action: #selector(EditorWindowController.zoomCanvasToFit(_:)), keyEquivalent: "9")
 
         item.submenu = menu
         return item

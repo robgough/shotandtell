@@ -10,6 +10,10 @@ don't.
 
 ## Unreleased
 
+- Zoom in on the screenshot to place marks precisely: pinch, ⌘-scroll, the
+  zoom button, or View › Zoom In (⌘+), Zoom Out (⌘−), Actual Size (⌘0) and
+  Zoom to Fit (⌘9). Scroll to move around while zoomed in. Marks stay sharp at
+  any zoom, and far enough in you see the screenshot's own pixels.
 - Fixed region and whole-screen captures sometimes coming out blurred and
   doubled, with the magnifier caught in them. Captures are now cut from the
   frozen picture you were selecting on, so they're exactly what you framed.
