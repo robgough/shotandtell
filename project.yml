@@ -131,7 +131,7 @@ targets:
         PRODUCT_MODULE_NAME: ShotAndTell
         ARCHS: arm64
         MARKETING_VERSION: "1.0"
-        CURRENT_PROJECT_VERSION: "2"
+        CURRENT_PROJECT_VERSION: "3"
         SWIFT_VERSION: "6.0"
         MACOSX_DEPLOYMENT_TARGET: "26.0"
         # Swift 6 language mode with MainActor as the default isolation. This app
