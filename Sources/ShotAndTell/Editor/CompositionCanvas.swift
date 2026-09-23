@@ -73,8 +73,8 @@ final class CompositionCanvasView: NSView {
     /// They're glass, and take their text colour from the composition's
     /// background. Zoomed in, the screenshot used to slide in under them, and a
     /// light screenshot under light-on-dark text made them all but invisible.
-    /// Keeping the composition out of this strip means they always sit on the
-    /// background they were matched to.
+    /// Fit and the pan limits keep the composition above this strip; when
+    /// zoomed in it can still pass under, and the editor frosts it.
     static let controlsInset: CGFloat = 58
 
     /// Where the composition may be drawn: under the toolbar's safe area, and
@@ -196,8 +196,8 @@ final class CompositionCanvasView: NSView {
 
         // Zoomed in, the composition is bigger than the view. It stops at the
         // legend panel, rather than smearing through its glass. Under the
-        // toolbar and the controls strip it carries on — the strip is veiled
-        // afterwards, in drawControlsStrip.
+        // toolbar and the controls strip it carries on; the editor puts a
+        // frosted bar over the strip while zoomed in (EditorView.controlsBar).
         let area = contentArea
         context.saveGState()
         context.clip(to: CGRect(x: area.minX, y: bounds.minY, width: area.width, height: bounds.height))
@@ -215,38 +215,6 @@ final class CompositionCanvasView: NSView {
         drawMarks(in: context)
         drawSelection(in: context)
         drawDragPreview(in: context)
-        drawControlsStrip(in: context)
-    }
-
-    /// A band of the background colour behind the bottom controls, mostly
-    /// opaque, so a zoomed-in screenshot scrolling under them shows through
-    /// faintly without taking their legibility with it. Its top fades in, the
-    /// way content goes under a toolbar.
-    ///
-    /// Only drawn when something is actually under the strip: at Fit the
-    /// composition stops above it and there's nothing to veil.
-    private func drawControlsStrip(in context: CGContext) {
-        guard let palette = cachedPalette else { return }
-        let area = contentArea
-        guard fitRect.minY < area.minY - 0.5 else { return }
-
-        let strip = CGRect(x: area.minX, y: bounds.minY, width: area.width, height: area.minY - bounds.minY)
-        let fade: CGFloat = 12
-        let solid = palette.canvasBottom.copy(alpha: 0.86) ?? palette.canvasBottom
-        let clear = palette.canvasBottom.copy(alpha: 0) ?? palette.canvasBottom
-
-        context.setFillColor(solid)
-        context.fill(CGRect(x: strip.minX, y: strip.minY, width: strip.width, height: strip.height - fade))
-
-        if let gradient = CGGradient(colorsSpace: CGColorSpace(name: CGColorSpace.sRGB),
-                                     colors: [solid, clear] as CFArray, locations: [0, 1]) {
-            context.saveGState()
-            context.clip(to: CGRect(x: strip.minX, y: strip.maxY - fade, width: strip.width, height: fade))
-            context.drawLinearGradient(gradient,
-                                       start: CGPoint(x: strip.midX, y: strip.maxY - fade),
-                                       end: CGPoint(x: strip.midX, y: strip.maxY), options: [])
-            context.restoreGState()
-        }
     }
 
     /// The marks, drawn by the compositor in view space every time, so they're

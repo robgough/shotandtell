@@ -38,22 +38,27 @@ struct EditorView: View {
         // Over the composition rather than up in the toolbar. It changes how the
         // background looks, it's set rarely, and the header is for the things
         // you reach for every time.
-        .overlay(alignment: .bottomLeading) {
-            zoomMenu
-                .environment(\.colorScheme, palette.canvasIsDark ? .dark : .light)
+        // Over the composition rather than up in the toolbar. They change how
+        // the picture looks, or how you're looking at it, and are set rarely —
+        // the header is for the things you reach for every time.
+        .overlay(alignment: .bottom) {
+            ZStack(alignment: .bottom) {
+                if document.magnification != nil {
+                    controlsBar
+                }
+                HStack(spacing: 8) {
+                    zoomMenu
+                    Spacer()
+                    markerMenu
+                    backgroundMenu
+                }
                 .padding(16)
-        }
-        .overlay(alignment: .bottomTrailing) {
-            HStack(spacing: 8) {
-                markerMenu
-                backgroundMenu
             }
             // Glass takes its tint and its text colour from the colour scheme,
             // and left alone that's the *system's* — so a dark Mac put white
             // text on glass over a pale composition, and it was unreadable. These
             // sit on the composition, so they follow the canvas instead.
             .environment(\.colorScheme, palette.canvasIsDark ? .dark : .light)
-            .padding(16)
         }
         .inspector(isPresented: .constant(true)) {
             legend.inspectorColumnWidth(min: 260, ideal: 300, max: 420)
@@ -226,6 +231,27 @@ struct EditorView: View {
                 blue: Double(srgb.blueComponent)
             )
         }
+    }
+
+    /// A frosted bar behind the bottom controls, shown only while zoomed in —
+    /// the only time the screenshot passes under them. A real blur, so what's
+    /// underneath reads as picture rather than as text competing with the
+    /// buttons, tinted towards the canvas colour and finished with a hairline
+    /// rather than a fade.
+    ///
+    /// Not hit-testable: a click on it goes to the canvas, as it would if the
+    /// bar weren't there.
+    private var controlsBar: some View {
+        Rectangle()
+            .fill(.regularMaterial)
+            .overlay(Color(cgColor: palette.canvasBottom).opacity(0.35))
+            .overlay(alignment: .top) {
+                Rectangle()
+                    .fill(Color.primary.opacity(0.12))
+                    .frame(height: 0.5)
+            }
+            .frame(height: CompositionCanvasView.controlsInset)
+            .allowsHitTesting(false)
     }
 
     /// Opposite corner from the colour and background buttons: those change the
