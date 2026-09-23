@@ -4,9 +4,10 @@ import AppKit
 ///
 /// Sits at the shielding level so it's above everything including full-screen
 /// apps, and joins all spaces so switching space mid-selection doesn't strand
-/// it. It never appears in the capture: ScreenCaptureKit filters our whole
-/// application out rather than us hiding the overlay first and racing the
-/// screen's redraw.
+/// it. It never appears in the capture because region and whole-screen captures
+/// are cut from the snapshot taken before it went up — see
+/// `CaptureService.crop`. Window captures use a single-window filter, which
+/// nothing else can appear in.
 final class SelectionOverlayWindow: NSWindow {
     /// Borderless windows refuse key status by default, and without it there's
     /// nowhere for Escape to land.

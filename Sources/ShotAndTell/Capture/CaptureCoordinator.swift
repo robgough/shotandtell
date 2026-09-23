@@ -50,13 +50,19 @@ final class CaptureCoordinator {
             }
 
             let content = try await CaptureService.shareableContent()
+            // Whether we could leave ourselves out of this capture's snapshots.
+            // When this is false, anything of ours that is on screen is in them.
+            let listed = content.applications.contains { $0.bundleIdentifier == Bundle.main.bundleIdentifier }
+            Log.capture.notice("Shareable content lists us: \(listed, privacy: .public)")
 
-            // Region and window selection both freeze the screen behind the
-            // overlay — and region magnifies the same snapshot. Taking a whole
-            // screen chooses nothing, so it doesn't need one.
-            let displayImages = request.mode == .screen
-                ? [:]
-                : await CaptureService.captureAllDisplays(content)
+            // Whenever the overlay goes up it shows a frozen snapshot of every
+            // display, and region and whole-screen captures are cut from that
+            // same snapshot afterwards. The only case with no overlay — and so
+            // nothing to snapshot — is taking the whole screen on a Mac with one.
+            let showsOverlay = !(request.mode == .screen && NSScreen.screens.count == 1)
+            let displayImages = showsOverlay
+                ? await CaptureService.captureAllDisplays(content)
+                : [:]
 
             let outcome = await SelectionPresenter.present(
                 mode: request.mode,
@@ -64,7 +70,7 @@ final class CaptureCoordinator {
                 displayImages: displayImages
             )
 
-            guard let captured = try await capture(outcome, from: content) else {
+            guard let captured = try await capture(outcome, from: content, snapshots: displayImages) else {
                 Log.capture.notice("Capture cancelled")
                 return
             }
@@ -80,7 +86,17 @@ final class CaptureCoordinator {
     }
 
     /// Returns nil when the user cancelled — which is an outcome, not an error.
-    private func capture(_ outcome: SelectionOutcome, from content: SCShareableContent) async throws -> CapturedImage? {
+    ///
+    /// Region and whole-screen captures come from the snapshot the overlay was
+    /// showing, not a fresh capture — see `CaptureService.crop`. A fresh one is
+    /// only the fallback when there's no snapshot for that display, and then it
+    /// asks for the list of apps again, so an overlay window that's still
+    /// closing is on it and gets left out.
+    private func capture(
+        _ outcome: SelectionOutcome,
+        from content: SCShareableContent,
+        snapshots: [CGDirectDisplayID: CapturedImage]
+    ) async throws -> CapturedImage? {
         switch outcome {
         case .cancelled:
             return nil
@@ -92,7 +108,13 @@ final class CaptureCoordinator {
             // The overlay works in AppKit's bottom-left coordinate space;
             // ScreenCaptureKit wants Core Graphics' top-left one.
             let cgRect = ScreenGeometry.cgGlobal(fromCocoa: rect)
-            return try await CaptureService.capture(region: cgRect, on: display, content: content)
+            if let snapshot = snapshots[displayID],
+               let cropped = CaptureService.crop(snapshot, to: cgRect, on: display) {
+                return cropped
+            }
+            Log.capture.notice("No snapshot for display \(displayID, privacy: .public); capturing live")
+            let fresh = try await CaptureService.shareableContent()
+            return try await CaptureService.capture(region: cgRect, on: display, content: fresh)
 
         case let .window(windowID):
             guard let window = content.windows.first(where: { $0.windowID == windowID }) else {
@@ -105,7 +127,13 @@ final class CaptureCoordinator {
             guard let display = content.displays.first(where: { $0.displayID == displayID }) else {
                 throw CaptureService.Failure.noDisplays
             }
-            return try await CaptureService.capture(display: display, content: content)
+            if let snapshot = snapshots[displayID] {
+                return snapshot
+            }
+            // Either there was no overlay (one display) or its snapshot failed.
+            // Fresh content either way, for the same reason as above.
+            let fresh = try await CaptureService.shareableContent()
+            return try await CaptureService.capture(display: display, content: fresh)
         }
     }
 

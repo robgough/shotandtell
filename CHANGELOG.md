@@ -10,6 +10,9 @@ don't.
 
 ## Unreleased
 
+- Fixed region and whole-screen captures sometimes coming out blurred and
+  doubled, with the magnifier caught in them. Captures are now cut from the
+  frozen picture you were selecting on, so they're exactly what you framed.
 - A box, arrow or redaction is drawn in its real colour and weight while you
   drag it out, with the number it's about to get, instead of a thin blue outline.
 - Marks carry a soft shadow, so they sit visibly on top of busy screenshots.

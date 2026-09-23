@@ -105,6 +105,44 @@ nonisolated enum CaptureService {
         return images
     }
 
+    /// A region cut out of the snapshot the overlay was showing, rather than a
+    /// second capture of the live screen.
+    ///
+    /// The second capture is what went wrong. It was taken the instant the
+    /// overlay was told to close, and it relied on filtering our own app out —
+    /// but the filter is built from a list of apps with windows on screen
+    /// *before* the overlay went up. With no editor open, we weren't on that
+    /// list, nothing was filtered, and the capture caught the overlay on its way
+    /// out: loupe, dimming and frozen frame blended with the live screen,
+    /// blurred by the window server's close animation. Intermittent, because it
+    /// depended on whether an editor window happened to be open.
+    ///
+    /// Cropping the snapshot has no race at all, and it's also more honest: it
+    /// is exactly the picture the user framed, not whatever the screen had moved
+    /// on to by the time they let go.
+    static func crop(_ snapshot: CapturedImage, to cgGlobalRect: CGRect, on display: SCDisplay) -> CapturedImage? {
+        guard cgGlobalRect.width >= minimumRegionSize, cgGlobalRect.height >= minimumRegionSize,
+              display.frame.width > 0, display.frame.height > 0
+        else { return nil }
+
+        // Pixels per point, measured from the snapshot itself rather than
+        // trusted from the filter, so a rounding difference in either axis
+        // can't shift the crop.
+        let sx = CGFloat(snapshot.image.width) / display.frame.width
+        let sy = CGFloat(snapshot.image.height) / display.frame.height
+
+        let local = cgGlobalRect.offsetBy(dx: -display.frame.minX, dy: -display.frame.minY)
+        let pixels = CGRect(
+            x: (local.minX * sx).rounded(),
+            y: (local.minY * sy).rounded(),
+            width: (local.width * sx).rounded(),
+            height: (local.height * sy).rounded()
+        ).intersection(CGRect(x: 0, y: 0, width: snapshot.image.width, height: snapshot.image.height))
+
+        guard !pixels.isEmpty, let image = snapshot.image.cropping(to: pixels) else { return nil }
+        return CapturedImage(image: image, source: .region, scale: snapshot.scale, sourceDescription: nil)
+    }
+
     // MARK: - Plumbing
 
     private static func run(
