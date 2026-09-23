@@ -67,6 +67,24 @@ final class CompositionCanvasView: NSView {
 
     private static let handleSize: CGFloat = 8
 
+    /// Room left clear along the bottom for the zoom, colour and background
+    /// buttons: their 16pt margin, their height, and a gap above them.
+    ///
+    /// They're glass, and take their text colour from the composition's
+    /// background. Zoomed in, the screenshot used to slide in under them, and a
+    /// light screenshot under light-on-dark text made them all but invisible.
+    /// Keeping the composition out of this strip means they always sit on the
+    /// background they were matched to.
+    static let controlsInset: CGFloat = 58
+
+    /// Where the composition may be drawn: under the toolbar's safe area, and
+    /// above the controls.
+    private var contentArea: CGRect {
+        let area = safeAreaRect
+        return CGRect(x: area.minX, y: area.minY + Self.controlsInset,
+                      width: area.width, height: max(0, area.height - Self.controlsInset))
+    }
+
     override var isFlipped: Bool { false }
     /// The whole view is painted now, so AppKit can skip whatever is behind it.
     override var isOpaque: Bool { true }
@@ -94,10 +112,10 @@ final class CompositionCanvasView: NSView {
         let layout = CompositionLayout.solve(composition, palette: palette, includeLegend: false)
         cachedLayout = layout
 
-        // safeAreaRect, not bounds: the canvas runs underneath the window's
-        // toolbar, and the composition shouldn't be fitted into the part of
-        // itself that's covered by it.
-        let area = safeAreaRect
+        // contentArea, not bounds: the canvas runs underneath the window's
+        // toolbar and the controls along the bottom, and the composition
+        // shouldn't be fitted into the parts of itself they cover.
+        let area = contentArea
         let fitted = Self.fit(layout.canvasSize, in: area)
         let fitsAt = layout.canvasSize.width > 0 ? fitted.width / layout.canvasSize.width : 1
         if abs(document.fitScale - fitsAt) > 0.0005 {
@@ -176,13 +194,13 @@ final class CompositionCanvasView: NSView {
             Compositor.drawBackground(palette: cachedPalette, in: bounds, context: context)
         }
 
-        // Zoomed in, the composition is bigger than the view and would carry on
-        // under the legend panel, smeared through its glass. Stopped at the
-        // panel's edge. Up under the toolbar is left alone — that's the
+        // Zoomed in, the composition is bigger than the view. It stops at the
+        // legend panel, rather than smearing through its glass, and above the
+        // controls strip. Up under the toolbar is left alone — that's the
         // standard look for content scrolled beneath one.
-        let area = safeAreaRect
+        let area = contentArea
         context.saveGState()
-        context.clip(to: CGRect(x: area.minX, y: bounds.minY, width: area.width, height: bounds.height))
+        context.clip(to: CGRect(x: area.minX, y: area.minY, width: area.width, height: bounds.maxY - area.minY))
         defer { context.restoreGState() }
 
         if let cachedImage {
@@ -362,7 +380,7 @@ final class CompositionCanvasView: NSView {
     /// allowance, so a window sized tight around the composition doesn't
     /// shrink it.
     private func reachableBounds(layout: CompositionLayout) -> CGRect {
-        let area = safeAreaRect
+        let area = contentArea
         let a = Compositor.normalise(canvasPoint(CGPoint(x: area.minX, y: area.minY)), in: layout.captureRect)
         let b = Compositor.normalise(canvasPoint(CGPoint(x: area.maxX, y: area.maxY)), in: layout.captureRect)
         let visible = CGRect(x: min(a.x, b.x), y: min(a.y, b.y), width: abs(b.x - a.x), height: abs(b.y - a.y))
@@ -451,7 +469,7 @@ final class CompositionCanvasView: NSView {
         document.setMagnification(scale)
 
         let newScale = min(max(document.magnification ?? document.fitScale, document.fitScale), EditorDocument.maximumMagnification)
-        let area = safeAreaRect
+        let area = contentArea
         panCentre = document.magnification == nil ? nil : CGPoint(
             x: anchor.x + (area.midX - viewPoint.x) / newScale,
             y: anchor.y + (area.midY - viewPoint.y) / newScale
@@ -485,7 +503,7 @@ final class CompositionCanvasView: NSView {
         addCursorRect(bounds, cursor: .openHand)
         // The dragged tools can start anywhere below the toolbar; the pin only
         // lands on the composition.
-        let drawable = tool.isDragged ? safeAreaRect : fitRect
+        let drawable = tool.isDragged ? contentArea : fitRect
         if !drawable.isEmpty {
             addCursorRect(drawable, cursor: .crosshair)
         }
@@ -663,7 +681,7 @@ final class CompositionCanvasView: NSView {
     /// With Select or the pin: outside the composition always, and inside it
     /// only where there's no mark to pick up.
     private func shouldDragWindow(from point: CGPoint, tool: EditorTool) -> Bool {
-        if tool.isDragged { return !safeAreaRect.contains(point) }
+        if tool.isDragged { return !contentArea.contains(point) }
         guard fitRect.contains(point) else { return true }
         guard tool == .select else { return false }
         return topmostAnnotation(at: point) == nil
