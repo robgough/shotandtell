@@ -6,7 +6,7 @@ with the shot on a background and a numbered legend beside it — so "the headin
 is too big" is understood the first time, by an AI agent or by a colleague.
 
 Status: **all six phases built**. The app captures, marks up, composes and
-exports; it is signed, sandboxed and App Store ready but not yet submitted.
+exports; it is signed, sandboxed and released on the Mac App Store.
 `CHANGELOG.md` is what it does; this file is why it's shaped this way.
 
 ## Decisions taken

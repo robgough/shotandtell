@@ -12,15 +12,10 @@
     if it isn't already on.
 
     APP STORE LINK
-    The download button is a "coming soon" placeholder. Search this file for
-    APP-STORE-LINK — it's one spot, in the hero, with the replacement markup
-    in the comment beside it.
-
-    TESTFLIGHT
-    The public beta link appears three times: the hero button, the "Not released
-    yet" note, and the card at the bottom. Search for TESTFLIGHT-LINK. When the
-    App Store link goes live, the hero button can go (or drop to a secondary
-    link) and the note and bottom card change as described at APP-STORE-LINK.
+    https://apps.apple.com/app/shot-and-tell/id6814688859 — deliberately without a country
+    code (/gb/ etc.) so Apple routes each visitor to their own storefront. It
+    appears twice: the hero button and the card at the bottom. Search for
+    APP-STORE-LINK.
 -->
 <html lang="en">
 <head>
@@ -39,7 +34,7 @@
     <meta property="og:site_name" content="Shot and Tell">
     <meta property="og:url" content="https://shotandtell.robgough.net/">
     <meta property="og:title" content="Shot and Tell — Annotate screenshots for AI">
-    <meta property="og:description" content="Numbered marks on a screenshot, a numbered legend beside it, one image out — for an AI agent, a colleague or a customer. Redact what's private. The app can't reach the internet. Free for macOS 26+, coming to the Mac App Store.">
+    <meta property="og:description" content="Numbered marks on a screenshot, a numbered legend beside it, one image out — for an AI agent, a colleague or a customer. Redact what's private. The app can't reach the internet. Free for macOS 26+ on the Mac App Store.">
     <meta property="og:image" content="https://shotandtell.robgough.net/media/example.png">
     <meta property="og:image:secure_url" content="https://shotandtell.robgough.net/media/example.png">
     <meta property="og:image:type" content="image/png">
@@ -51,7 +46,7 @@
     <!-- Twitter / X -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Shot and Tell — Annotate screenshots for AI">
-    <meta name="twitter:description" content="Numbered marks on a screenshot, a numbered legend beside it, one image out — for an AI agent, a colleague or a customer. Redact what's private. The app can't reach the internet. Free for macOS 26+, coming to the Mac App Store.">
+    <meta name="twitter:description" content="Numbered marks on a screenshot, a numbered legend beside it, one image out — for an AI agent, a colleague or a customer. Redact what's private. The app can't reach the internet. Free for macOS 26+ on the Mac App Store.">
     <meta name="twitter:image" content="https://shotandtell.robgough.net/media/example.png">
     <meta name="twitter:image:alt" content="A screenshot of a folder of app icons on a dark background, with four numbered red markers on it and a numbered legend to the right describing each one.">
 
@@ -66,6 +61,7 @@
         "applicationCategory": "UtilitiesApplication",
         "operatingSystem": "macOS 26+",
         "image": "https://shotandtell.robgough.net/media/example.png",
+        "downloadUrl": "https://apps.apple.com/app/shot-and-tell/id6814688859",
         "offers": {
             "@type": "Offer",
             "price": "0",
@@ -228,26 +224,6 @@
             transition: transform 0.06s ease;
         }
         .cta:hover { transform: translateY(-1px); }
-        /* The not-yet-live App Store button. Deliberately not a link:
-           muted fill, dashed edge, no hover lift, and it says so. */
-        .cta.pending {
-            background: var(--card);
-            color: var(--fg-dim);
-            border: 1px dashed color-mix(in oklab, var(--fg-faint) 70%, transparent);
-            cursor: default;
-            user-select: none;
-        }
-        .cta.pending:hover { transform: none; }
-        .cta.pending .soon {
-            font-size: 10.5px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: var(--accent);
-            background: color-mix(in oklab, var(--accent) 12%, transparent);
-            border-radius: 999px;
-            padding: 3px 8px;
-        }
         .secondary-link {
             color: var(--fg-dim);
             text-decoration: none;
@@ -285,20 +261,6 @@
             background: var(--accent);
             flex-shrink: 0;
         }
-        .preview-note {
-            margin: 24px 0 0;
-            padding: 14px 16px;
-            background: color-mix(in oklab, var(--accent) 6%, var(--card));
-            border: 1px solid color-mix(in oklab, var(--accent) 22%, var(--border));
-            border-radius: 10px;
-            color: var(--fg-dim);
-            font-size: 14.5px;
-            line-height: 1.55;
-            max-width: 580px;
-        }
-        .preview-note strong { color: var(--fg); font-weight: 600; }
-        .preview-note a { color: var(--accent); text-decoration: none; font-weight: 500; }
-        .preview-note a:hover { text-decoration: underline; }
 
         /* ---- screenshots -------------------------------------------- */
         .demo-frame {
@@ -679,25 +641,8 @@
 
         <div class="download-row">
             <div class="download-col">
-                <!-- TESTFLIGHT-LINK: the one thing on this row you can do today,
-                     so it gets the solid button and the pending App Store one
-                     sits beside it. -->
-                <a class="cta" href="https://testflight.apple.com/join/nZ4japFW">Join the TestFlight beta →</a>
-                <span class="col-meta">Free · Needs the TestFlight app</span>
-            </div>
-            <div class="download-col">
-                <!-- APP-STORE-LINK
-                     Not on the App Store yet. When it is, replace the <span>
-                     below with the badge (an inline SVG, so nothing is fetched):
-
-                     <a class="cta" href="https://apps.apple.com/app/shot-and-tell/idXXXXXXXXXX">
-                         Download on the Mac App Store →
-                     </a>
-
-                     and change the meta line to "Free · Apple Silicon · macOS 26+".
-                     Then remove the .preview-note paragraph below the chips and
-                     update the "Coming soon" card at the bottom of the page. -->
-                <span class="cta pending">Mac App Store <span class="soon">Coming soon</span></span>
+                <!-- APP-STORE-LINK -->
+                <a class="cta" href="https://apps.apple.com/app/shot-and-tell/id6814688859">Download on the Mac App Store →</a>
                 <span class="col-meta">Free · No in-app purchases · Apple Silicon · macOS 26+</span>
             </div>
             <a class="secondary-link" href="https://github.com/robgough/shotandtell">Source on GitHub →</a>
@@ -711,10 +656,6 @@
             <li class="chip">Can't reach the internet</li>
             <li class="chip">Free, MIT licensed</li>
         </ul>
-
-        <p class="preview-note">
-            <strong>Not released yet.</strong> The app is built and headed for the Mac App Store; the button above becomes real once it's through review. Until then you can <a href="https://testflight.apple.com/join/nZ4japFW">try the beta through TestFlight</a> <!-- TESTFLIGHT-LINK -->, the source is on <a href="https://github.com/robgough/shotandtell">GitHub</a>, and feedback is welcome at <a href="mailto:hello@robgough.net">hello@robgough.net</a>.
-        </p>
     </header>
 
     <figure class="shot demo">
@@ -921,7 +862,7 @@
 
         <details>
             <summary>Is it open source?</summary>
-            <p>Yes, MIT licensed, on <a href="https://github.com/robgough/shotandtell">GitHub</a>. If you'd rather build it than wait for the App Store or <a href="https://testflight.apple.com/join/nZ4japFW">join the beta</a>: <code>brew install xcodegen</code>, then <code>./gen</code> and open the project in Xcode. You'll need your own signing identity.</p>
+            <p>Yes, MIT licensed, on <a href="https://github.com/robgough/shotandtell">GitHub</a>. If you'd rather build it yourself than install it from the App Store: <code>brew install xcodegen</code>, then <code>./gen</code> and open the project in Xcode. You'll need your own signing identity.</p>
         </details>
 
         <details>
@@ -940,17 +881,14 @@
         <p class="table-footnote">Apple Intelligence is optional. With it on, and on macOS 27 or later, titles are suggested from the screenshot; without it you type them. Nothing is downloaded, because nothing can be.</p>
     </section>
 
-    <section class="final-cta" aria-label="Coming soon">
-        <h2>Coming soon</h2>
-        <p>Shot and Tell is headed for the Mac App Store. Free, no in-app purchases, and it can't phone home. Until it's through review, the beta is on TestFlight.</p>
-        <!-- When the App Store link is live, the badge from the hero
-             (APP-STORE-LINK above) can be repeated here so a reader who has
-             scrolled the whole page doesn't have to go back up. -->
+    <section class="final-cta" aria-label="Download">
+        <h2>Get Shot and Tell</h2>
+        <p>Free on the Mac App Store. No in-app purchases, and it can't phone home.</p>
         <div class="download-row">
             <div class="download-col" style="align-items: center;">
-                <!-- TESTFLIGHT-LINK -->
-                <a class="cta" href="https://testflight.apple.com/join/nZ4japFW">Join the TestFlight beta →</a>
-                <span class="col-meta">Free · Needs the TestFlight app</span>
+                <!-- APP-STORE-LINK -->
+                <a class="cta" href="https://apps.apple.com/app/shot-and-tell/id6814688859">Download on the Mac App Store →</a>
+                <span class="col-meta">Free · Apple Silicon · macOS 26+</span>
             </div>
             <a class="secondary-link" href="https://github.com/robgough/shotandtell">Source on GitHub →</a>
         </div>

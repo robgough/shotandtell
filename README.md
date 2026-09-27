@@ -9,10 +9,7 @@ understood the first time, by an AI agent or by a colleague.
 
 Menubar app with a Dock icon. Click the Dock icon or pick *New Capture* to start.
 
-macOS 26+. Mac App Store. Free.
-
-**Try the beta:** [join on TestFlight](https://testflight.apple.com/join/nZ4japFW) while the
-App Store release is in review.
+macOS 26+. Free. **[Download on the Mac App Store](https://apps.apple.com/app/shot-and-tell/id6814688859)**
 
 ## How it works
 
@@ -41,4 +38,4 @@ this way, and [RELEASING.md](RELEASING.md) for shipping it.
 
 [shotandtell site](https://shotandtell.robgough.net/) · [privacy](https://shotandtell.robgough.net/privacy.html)
 
-**Status: in development.** Headed for the Mac App Store.
+**Status: released** on the [Mac App Store](https://apps.apple.com/app/shot-and-tell/id6814688859).
